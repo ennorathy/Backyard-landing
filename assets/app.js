@@ -56,6 +56,11 @@
     return m.toLocaleString('en-US') + 'M';
   }
 
+  function thousands(n) {
+    // Titles arrive rounded up to 500: 2000 -> 2K, 2500 -> 2.5K.
+    return n >= 1e3 ? trim(n / 1e3, 1) + 'K' : String(Math.ceil(n));
+  }
+
   function trim(x, digits) {
     return String(Number(x.toFixed(digits)));
   }
@@ -133,34 +138,12 @@
     if (cards.length) grid.replaceChildren(...cards, moreCell());
   }
 
-  // Of the languages without a channel only Portuguese is announced.
-  const SOON = [{ code: 'pt', name: 'Português' }];
-
-  function renderLanguages(list) {
-    const grid = document.getElementById('langs-grid');
-    const item = (code, name, live) => {
-      const i = el('div', 'lang-item' + (live ? '' : ' soon'));
-      i.append(
-        el('span', 'code', String(code).toUpperCase()),
-        el('span', 'lname', name || String(code).toUpperCase()),
-        el('span', 'state', live ? 'Live' : 'Will be soon')
-      );
-      return i;
-    };
-    const live = list.filter(l => l && l.code && l.has_channel);
-    if (!live.length) return;
-    const liveCodes = live.map(l => String(l.code).toLowerCase());
-    const soon = SOON.filter(l => !liveCodes.includes(l.code));
-    grid.replaceChildren(...live.map(l => item(l.code, l.name, true)), ...soon.map(l => item(l.code, l.name, false)));
-  }
-
   function apply(d) {
-    if (isNum(d.titles)) setText('titles', Math.ceil(d.titles).toLocaleString('en-US'));
+    if (isNum(d.titles)) setText('titles', thousands(d.titles));
     if (isNum(d.views)) setText('views', millions(d.views));
     if (isNum(d.subscribers_total)) setText('subscribers_total', millions(d.subscribers_total));
     if (isNum(d.active_channels)) setText('active_channels', String(d.active_channels));
     if (Array.isArray(d.channels)) renderChannels(d.channels);
-    if (Array.isArray(d.languages)) renderLanguages(d.languages);
   }
 
   fetch('/landing.json', { cache: 'no-cache' })

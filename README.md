@@ -8,6 +8,7 @@ index.html          page (fallback numbers are baked into the markup)
 assets/styles.css   styles from the deck, adapted to a scrolling page
 assets/app.js       section nav + loads /landing.json
 assets/favicon.svg
+assets/partners/   partner logos (from the previous backyard.cx site)
 landing.json        example data with the deck's current values (dev placeholder)
 ```
 
@@ -17,12 +18,11 @@ On load the page fetches `/landing.json` from the same domain and replaces:
 
 | JSON field          | Where on the page                       | Shown as |
 |---------------------|-----------------------------------------|----------|
-| `titles`            | Traction · Titles entrusted to us       | `2000` → **2,000+** |
+| `titles`            | Traction · Titles entrusted to us       | `2000` → **2K+**, `2500` → **2.5K+** |
 | `views`             | Traction · Monthly views generated      | `35000000` → **35M+** |
 | `subscribers_total` | Traction · Subs across our network      | `9000000` → **9M+** |
 | `active_channels`   | Traction · Channels live                | `15` → **15.** |
 | `channels[]`        | Network · first 9 channel cards in the order sent (worker ranks by last month's views): name, avatar, language, subscribers, link; the 10th cell is "And others" | `1220000` → **1.22M subs** |
-| `languages[]`       | Offer · Languages we publish in         | languages with `has_channel: true` are **Live**; of the rest only Portuguese is shown, as **Will be soon** (hardcoded in `app.js`) |
 
 The numbers arrive already rounded by the worker (titles up to 500, views up to 5M, channels up to 5, subscribers total up to 1M).
 If the file is missing or broken, the page keeps the values in the markup. Channel links are accepted only for `https://*.youtube.com`, avatars only from YouTube's image hosts (`ggpht.com`, `ytimg.com`, `googleusercontent.com`); without an avatar the card shows the channel's initial.

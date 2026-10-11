@@ -251,6 +251,8 @@
   .partner{background:var(--bg);padding:clamp(20px,3vh,36px) clamp(14px,1.8vw,24px);display:flex;flex-direction:column;gap:6px;min-height:clamp(86px,12vh,120px);justify-content:center;align-items:center;text-align:center}
   .partner .pname{font-family:var(--display);font-size:clamp(14px,1.25vw,19px);font-weight:600;letter-spacing:-.01em;line-height:1.15;text-transform:uppercase}
   .partner .psub{font-family:var(--mono);font-size:var(--fs-mono-small);color:var(--ink-muted);font-weight:500;letter-spacing:.1em;text-transform:none}
+  .partner .plogo{max-width:min(180px,90%);max-height:clamp(40px,6vh,64px);width:auto;height:auto;object-fit:contain;opacity:.85;transition:opacity .3s}
+  .partner:hover .plogo{opacity:1}
   .partners-foot{
     font-family:var(--display);font-size:clamp(20px,2vw,32px);
     letter-spacing:-.01em;text-transform:uppercase;color:var(--ink-dim);text-align:center;font-weight:500;font-style:italic;
