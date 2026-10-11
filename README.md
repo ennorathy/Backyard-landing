@@ -101,7 +101,8 @@ So the orb starts tiny, grows into a white-hot core only while the cursor keeps 
 and fades once it stops; a fast cursor leaves a swirling trail.
 The simulation runs in genpeach's peach (`SPLAT_COLOR` × `SPLAT_AMOUNT` 0.15); the last lines of the display shader swap that
 peach for the site's red (`#ff2d2d`) and keep the white.
-The canvas sits above the content with `pointer-events:none`, so clicks go through.
+As on genpeach.ai, the canvas sits behind the content (`.deck` is above it), so text and buttons stay on top of the orb;
+grid cells are transparent with lines drawn by `box-shadow`, so the orb also shows through the tables. It never takes clicks.
 On phones the orb follows the finger while it touches the screen (no shading there, like genpeach).
 It is skipped without WebGL and with `prefers-reduced-motion`.
 Tune it in the `config` object at the top of `fluid.js` (e.g. `DENSITY_DISSIPATION` for how fast the trail fades).

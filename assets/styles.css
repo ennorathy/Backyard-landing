@@ -49,7 +49,7 @@
 
   /* PAGE — every slide is a full-height section, scrolled vertically */
   html{scroll-behavior:smooth;scroll-padding-top:0}
-  .deck{position:relative;width:100%}
+  .deck{position:relative;z-index:1;width:100%}
   .slide{
     position:relative;min-height:100vh;min-height:100svh;
     padding:var(--pad-y) var(--pad-x) var(--pad-bottom);
@@ -58,8 +58,9 @@
   }
   .slide + .slide{border-top:1px solid var(--line)}
 
-  /* Cursor fluid trail — above content, never takes clicks; screen blend keeps text readable */
-  #fluid{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:40;mix-blend-mode:screen}
+  /* Cursor fluid trail — behind the content like on genpeach.ai: text and buttons sit on top of it.
+     Grid cells are transparent (lines drawn with box-shadow) so the trail shows through tables too. */
+  #fluid{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:0}
 
   /* Header — brand top-left, section links top-right (fixed, same style as slide chrome) */
   .chrome{
@@ -186,14 +187,14 @@
   .channels-head .right{font-size:var(--fs-body);color:var(--ink-dim);max-width:420px;line-height:1.55;font-weight:300}
   .channels-head .right strong{color:var(--ink);font-weight:500}
   .channels-grid{
-    display:grid;grid-template-columns:repeat(5,1fr);gap:1px;background:var(--line-2);
+    display:grid;grid-template-columns:repeat(5,1fr);gap:1px;
     margin-top:clamp(20px,2.5vh,32px);border:1px solid var(--line-2);
   }
   .channel{
-    background:var(--bg);padding:clamp(14px,1.8vh,20px) clamp(12px,1.3vw,18px);display:flex;flex-direction:column;gap:clamp(6px,0.8vh,10px);
+    box-shadow:0 0 0 1px var(--line-2);padding:clamp(14px,1.8vh,20px) clamp(12px,1.3vw,18px);display:flex;flex-direction:column;gap:clamp(6px,0.8vh,10px);
     cursor:pointer;transition:all .3s;min-height:clamp(110px,15vh,150px);justify-content:space-between;position:relative;
   }
-  .channel:hover{background:#161616}
+  .channel:hover{background:rgba(255,255,255,.045)}
   .channel .row-top{display:flex;align-items:center;justify-content:space-between;gap:8px}
   .channel .lang-tag{font-family:var(--mono);font-size:var(--fs-mono-small);letter-spacing:.2em;color:var(--ink-muted);text-transform:uppercase;font-weight:500}
   .channel.new .lang-tag::after{content:" · new";color:var(--accent)}
@@ -209,7 +210,7 @@
   .channel .avatar img{width:100%;height:100%;object-fit:cover;display:block}
   .channel:hover .avatar{border-color:var(--accent)}
   .channel.more{cursor:default;justify-content:center}
-  .channel.more:hover{background:var(--bg)}
+  .channel.more:hover{background:transparent}
   .channel.more .lang-tag{color:var(--accent)}
   .channel.more .name{color:var(--ink-dim);font-style:italic;margin-top:auto}
 
@@ -247,8 +248,9 @@
 
   /* ========== SLIDE 6 — PARTNERS ========== */
   .partners-wrap{flex:1;display:flex;flex-direction:column;justify-content:safe center;gap:clamp(20px,3vh,36px);margin-top:clamp(20px,3vh,40px);min-height:0}
-  .partners-list{display:grid;grid-template-columns:repeat(5,1fr);gap:1px;background:var(--line-2);border:1px solid var(--line-2)}
-  .partner{background:var(--bg);padding:clamp(20px,3vh,36px) clamp(14px,1.8vw,24px);display:flex;flex-direction:column;gap:6px;min-height:clamp(86px,12vh,120px);justify-content:center;align-items:center;text-align:center}
+  .partners-list{display:grid;grid-template-columns:repeat(5,1fr);gap:1px;border:1px solid var(--line-2)}
+  .partner{box-shadow:0 0 0 1px var(--line-2);padding:clamp(20px,3vh,36px) clamp(14px,1.8vw,24px);display:flex;flex-direction:column;gap:6px;min-height:clamp(86px,12vh,120px);justify-content:center;align-items:center;text-align:center}
+  .partner.reserved-slot:not(:hover){background:transparent}
   .partner .pname{font-family:var(--display);font-size:clamp(14px,1.25vw,19px);font-weight:600;letter-spacing:-.01em;line-height:1.15;text-transform:uppercase}
   .partner .psub{font-family:var(--mono);font-size:var(--fs-mono-small);color:var(--ink-muted);font-weight:500;letter-spacing:.1em;text-transform:none}
   .partner .plogo{max-width:min(180px,90%);max-height:clamp(40px,6vh,64px);width:auto;height:auto;object-fit:contain;opacity:.85;transition:opacity .3s}
@@ -304,8 +306,8 @@
   }
 
   /* Languages strip — fed from landing.json */
-  .langs-grid{display:flex;flex-wrap:wrap;gap:1px;background:var(--line-2);border:1px solid var(--line-2);margin-top:clamp(14px,1.8vh,22px)}
-  .langs-grid .lang-item{flex:1 1 140px;background:var(--bg);padding:clamp(12px,1.6vh,18px) clamp(12px,1.3vw,18px);display:flex;flex-direction:column;gap:6px}
+  .langs-grid{display:flex;flex-wrap:wrap;gap:1px;border:1px solid var(--line-2);margin-top:clamp(14px,1.8vh,22px)}
+  .langs-grid .lang-item{flex:1 1 140px;box-shadow:0 0 0 1px var(--line-2);padding:clamp(12px,1.6vh,18px) clamp(12px,1.3vw,18px);display:flex;flex-direction:column;gap:6px}
   .langs-grid .lang-item .code{font-family:var(--mono);font-size:var(--fs-mono-small);letter-spacing:.2em;color:var(--ink-muted);text-transform:uppercase;font-weight:500}
   .langs-grid .lang-item .lname{font-family:var(--display);font-size:clamp(15px,1.35vw,20px);font-weight:700;line-height:1;letter-spacing:-.015em;text-transform:uppercase}
   .langs-grid .lang-item .state{font-family:var(--mono);font-size:var(--fs-mono-small);letter-spacing:.18em;text-transform:uppercase;font-weight:600;color:var(--accent);margin-top:auto}
