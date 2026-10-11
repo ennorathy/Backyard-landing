@@ -93,10 +93,11 @@ sudo rsync -a --delete --exclude .git --exclude README.md --exclude landing.json
 ## Cursor fluid trail
 
 `assets/fluid.js` is an adapted copy of [WebGL-Fluid-Simulation](https://github.com/PavelDoGreat/WebGL-Fluid-Simulation) (MIT, © Pavel Dobryakov):
-GUI, promo and analytics removed, transparent canvas, red trail that follows the cursor or finger.
-The dye is drawn as a glossy liquid (hard edge, rounded surface, highlight: the `LIQUID` block in the display shader;
-`LIQUID_EDGE` sets where the edge is, `LIQUID_COLOR` the colour) instead of the original smoke.
+GUI, promo and analytics removed, transparent canvas.
+A glowing coral orb sits under the cursor (white-hot when it rests, coral when it moves) and leaves a swirling trail with a soft glow around it.
+The orb is fed into the dye every frame by the `emitShader` (the dye eases toward the orb colour, so it never piles up);
+the glow is the simulation's bloom. Orb settings are the `EMIT_*` keys: colour, brightness, size, and how fast it fades to coral with speed.
 The canvas sits above the content with `pointer-events:none`, so clicks go through.
-On phones it follows the finger while touching and scrolling, on a lighter simulation (lower resolution, pixel ratio 1).
+On phones the orb appears under the finger while it touches the screen, on a lighter simulation (lower resolution, pixel ratio 1).
 It is skipped without WebGL and with `prefers-reduced-motion`.
 Tune it in the `config` object at the top of `fluid.js` (e.g. `DENSITY_DISSIPATION` for how fast the trail fades).

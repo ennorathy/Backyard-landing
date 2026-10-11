@@ -40,36 +40,47 @@ let config = {
     SIM_RESOLUTION: 128,
     DYE_RESOLUTION: 1024,
     CAPTURE_RESOLUTION: 512,
-    DENSITY_DISSIPATION: 1.6,
-    VELOCITY_DISSIPATION: 0.6,
+    DENSITY_DISSIPATION: 3.0,
+    VELOCITY_DISSIPATION: 2.5,
     PRESSURE: 0.8,
     PRESSURE_ITERATIONS: 20,
-    CURL: 10,
-    SPLAT_RADIUS: 0.22,
-    SPLAT_FORCE: 3000,
+    CURL: 8,
+    SPLAT_RADIUS: 0.2,
+    SPLAT_FORCE: 6000,
     SHADING: true,
-    LIQUID: true,
-    COLORFUL: true,
+    COLORFUL: false,
     COLOR_UPDATE_SPEED: 10,
     PAUSED: false,
     BACK_COLOR: { r: 0, g: 0, b: 0 },
     TRANSPARENT: true,
-    BLOOM: false,
+    BLOOM: true,
     BLOOM_ITERATIONS: 8,
     BLOOM_RESOLUTION: 256,
-    BLOOM_INTENSITY: 0.8,
-    BLOOM_THRESHOLD: 0.6,
+    BLOOM_INTENSITY: 0.7,
+    BLOOM_THRESHOLD: 1.0,
     BLOOM_SOFT_KNEE: 0.7,
     SUNRAYS: false,
     SUNRAYS_RESOLUTION: 196,
     SUNRAYS_WEIGHT: 1.0,
+    // Backyard: a glowing coral orb sits under the cursor while it is on the page.
+    // Above 1.0 the coral overexposes to white; radii are parts of the shorter side.
+    EMIT_COLOR: { r: 1.0, g: 0.43, b: 0.37 },
+    EMIT_INTENSITY: 5.0,
+    EMIT_RATE: 0.15,
+    EMIT_SPEED_FALLOFF: 12,
+    EMIT_INNER: 0.045,
+    EMIT_OUTER: 0.08,
 }
 
 if (TOUCH) {
     config.SIM_RESOLUTION = 64;
     config.DYE_RESOLUTION = 512;
     config.PRESSURE_ITERATIONS = 10;
-    config.SPLAT_RADIUS = 0.18;
+    config.BLOOM_RESOLUTION = 128;
+    config.BLOOM_ITERATIONS = 6;
+    config.SPLAT_RADIUS = 0.3;
+    config.EMIT_INNER = 0.07;
+    config.EMIT_OUTER = 0.11;
 }
 
 function pointerPrototype () {
@@ -87,6 +98,8 @@ function pointerPrototype () {
 
 let pointers = [];
 let splatStack = [];
+// Cursor or finger position in canvas pixels; active while it is on the page.
+const emitter = { active: false, x: 0, y: 0, lastX: 0, lastY: 0 };
 pointers.push(new pointerPrototype());
 
 const ctx = getWebGLContext(canvas);
@@ -457,8 +470,6 @@ const checkerboardShader = compileShader(gl.FRAGMENT_SHADER, `
 
 const displayShaderSource = `
     precision highp float;
-    #define LIQUID_EDGE 0.05
-    #define LIQUID_COLOR vec3(0.78, 0.06, 0.06)
     precision highp sampler2D;
 
     varying vec2 vUv;
@@ -480,23 +491,6 @@ const displayShaderSource = `
 
     void main () {
         vec3 c = texture2D(uTexture, vUv).rgb;
-
-    #ifdef LIQUID
-        // Backyard: render the dye as a glossy liquid instead of smoke - a hard
-        // edge where the dye is dense enough, a rounded surface and a highlight.
-        float d = length(c);
-        float body = smoothstep(LIQUID_EDGE, LIQUID_EDGE * 1.6, d);
-        float hl = smoothstep(LIQUID_EDGE, LIQUID_EDGE * 6.0, length(texture2D(uTexture, vL).rgb));
-        float hr = smoothstep(LIQUID_EDGE, LIQUID_EDGE * 6.0, length(texture2D(uTexture, vR).rgb));
-        float ht = smoothstep(LIQUID_EDGE, LIQUID_EDGE * 6.0, length(texture2D(uTexture, vT).rgb));
-        float hb = smoothstep(LIQUID_EDGE, LIQUID_EDGE * 6.0, length(texture2D(uTexture, vB).rgb));
-        vec3 n = normalize(vec3(hl - hr, hb - ht, 0.35));
-        vec3 l = normalize(vec3(-0.45, 0.6, 1.0));
-        float diffuse = clamp(dot(n, l), 0.0, 1.0);
-        float spec = pow(max(dot(reflect(-l, n), vec3(0.0, 0.0, 1.0)), 0.0), 36.0);
-        vec3 base = LIQUID_COLOR * (0.45 + 0.55 * diffuse);
-        c = (base + vec3(spec) * 0.55) * body;
-    #endif
 
     #ifdef SHADING
         vec3 lc = texture2D(uTexture, vL).rgb;
@@ -530,7 +524,6 @@ const displayShaderSource = `
         float noise = texture2D(uDithering, vUv * ditherScale).r;
         noise = noise * 2.0 - 1.0;
         bloom += noise / 255.0;
-        bloom = linearToGamma(bloom);
         c += bloom;
     #endif
 
@@ -668,6 +661,29 @@ const splatShader = compileShader(gl.FRAGMENT_SHADER, `
         vec3 splat = exp(-dot(p, p) / radius) * color;
         vec3 base = texture2D(uTarget, vUv).xyz;
         gl_FragColor = vec4(base + splat, 1.0);
+    }
+`);
+
+// Backyard: feeds the cursor orb into the dye - a flat bright disc with a soft
+// rim. The dye eases toward the orb's colour instead of adding up, so a resting
+// cursor glows white while a moving one leaves a lighter coral trail.
+const emitShader = compileShader(gl.FRAGMENT_SHADER, `
+    precision highp float;
+    precision highp sampler2D;
+
+    varying vec2 vUv;
+    uniform sampler2D uTarget;
+    uniform vec2 size;
+    uniform vec3 color;
+    uniform vec2 point;
+    uniform vec2 radius;
+    uniform float rate;
+
+    void main () {
+        float d = length((vUv - point) * size);
+        float k = (1.0 - smoothstep(radius.x, radius.y, d)) * rate;
+        vec3 base = texture2D(uTarget, vUv).xyz;
+        gl_FragColor = vec4(base + max(color - base, 0.0) * k, 1.0);
     }
 `);
 
@@ -898,6 +914,7 @@ const bloomFinalProgram      = new Program(baseVertexShader, bloomFinalShader);
 const sunraysMaskProgram     = new Program(baseVertexShader, sunraysMaskShader);
 const sunraysProgram         = new Program(baseVertexShader, sunraysShader);
 const splatProgram           = new Program(baseVertexShader, splatShader);
+const emitProgram            = new Program(baseVertexShader, emitShader);
 const advectionProgram       = new Program(baseVertexShader, advectionShader);
 const divergenceProgram      = new Program(baseVertexShader, divergenceShader);
 const curlProgram            = new Program(baseVertexShader, curlShader);
@@ -1087,8 +1104,7 @@ function createTextureAsync (url) {
 
 function updateKeywords () {
     let displayKeywords = [];
-    if (config.LIQUID) displayKeywords.push("LIQUID");
-    else if (config.SHADING) displayKeywords.push("SHADING");
+    if (config.SHADING) displayKeywords.push("SHADING");
     if (config.BLOOM) displayKeywords.push("BLOOM");
     if (config.SUNRAYS) displayKeywords.push("SUNRAYS");
     displayMaterial.setKeywords(displayKeywords);
@@ -1106,7 +1122,7 @@ function update () {
     if (resizeCanvas())
         initFramebuffers();
     updateColors(dt);
-    applyInputs();
+    applyInputs(dt);
     if (!config.PAUSED)
         step(dt);
     render(null);
@@ -1144,16 +1160,29 @@ function updateColors (dt) {
     }
 }
 
-function applyInputs () {
+function applyInputs (dt) {
     if (splatStack.length > 0)
         multipleSplats(splatStack.pop());
 
-    pointers.forEach(p => {
-        if (p.moved) {
-            p.moved = false;
-            splatPointer(p);
-        }
-    });
+    if (!emitter.active) return;
+    // Feed the orb every frame; a fast move is filled in with several splats
+    // along the path so the trail stays continuous.
+    const dxPx = emitter.x - emitter.lastX;
+    const dyPx = emitter.y - emitter.lastY;
+    emitter.lastX = emitter.x;
+    emitter.lastY = emitter.y;
+    const n = Math.min(8, Math.max(1, Math.ceil(Math.hypot(dxPx, dyPx) / scaleByPixelRatio(12))));
+    const vx = correctDeltaX(dxPx / canvas.width) * config.SPLAT_FORCE / n;
+    const vy = correctDeltaY(-dyPx / canvas.height) * config.SPLAT_FORCE / n;
+    // EMIT_RATE and EMIT_SPEED_FALLOFF are per 60 fps frame; scale them to this frame.
+    const frames = dt * 60;
+    const rate = 1 - Math.pow(1 - config.EMIT_RATE, frames / n);
+    // A resting orb glows white; the faster it moves, the more it fades to coral.
+    const brightness = 1 / (1 + Math.hypot(dxPx, dyPx) / Math.max(frames, 0.1) / scaleByPixelRatio(config.EMIT_SPEED_FALLOFF));
+    for (let i = 1; i <= n; i++) {
+        const back = 1 - i / n;
+        emit((emitter.x - dxPx * back) / canvas.width, 1.0 - (emitter.y - dyPx * back) / canvas.height, vx, vy, rate, brightness);
+    }
 }
 
 function step (dt) {
@@ -1259,9 +1288,7 @@ function drawDisplay (target) {
     let height = target == null ? gl.drawingBufferHeight : target.height;
 
     displayMaterial.bind();
-    if (config.LIQUID)
-        gl.uniform2f(displayMaterial.uniforms.texelSize, dye.texelSizeX, dye.texelSizeY);
-    else if (config.SHADING)
+    if (config.SHADING)
         gl.uniform2f(displayMaterial.uniforms.texelSize, 1.0 / width, 1.0 / height);
     gl.uniform1i(displayMaterial.uniforms.uTexture, dye.read.attach(0));
     if (config.BLOOM) {
@@ -1346,15 +1373,6 @@ function blur (target, temp, iterations) {
     }
 }
 
-function splatPointer (pointer) {
-    let dx = pointer.deltaX * config.SPLAT_FORCE;
-    let dy = pointer.deltaY * config.SPLAT_FORCE;
-    // Scroll splats repeat at one spot, so they add less dye.
-    const k = pointer.fromScroll ? 0.15 : 1;
-    const color = { r: pointer.color.r * k, g: pointer.color.g * k, b: pointer.color.b * k };
-    splat(pointer.texcoordX, pointer.texcoordY, dx, dy, color);
-}
-
 function multipleSplats (amount) {
     for (let i = 0; i < amount; i++) {
         const color = generateColor();
@@ -1385,6 +1403,31 @@ function splat (x, y, dx, dy, color) {
     dye.swap();
 }
 
+function emit (x, y, dx, dy, rate, brightness) {
+    if (dx !== 0 || dy !== 0) {
+        splatProgram.bind();
+        gl.uniform1i(splatProgram.uniforms.uTarget, velocity.read.attach(0));
+        gl.uniform1f(splatProgram.uniforms.aspectRatio, canvas.width / canvas.height);
+        gl.uniform2f(splatProgram.uniforms.point, x, y);
+        gl.uniform3f(splatProgram.uniforms.color, dx, dy, 0.0);
+        gl.uniform1f(splatProgram.uniforms.radius, correctRadius(config.SPLAT_RADIUS / 100.0));
+        blit(velocity.write);
+        velocity.swap();
+    }
+
+    const side = Math.min(canvas.width, canvas.height);
+    const c = config.EMIT_COLOR, k = config.EMIT_INTENSITY * brightness;
+    emitProgram.bind();
+    gl.uniform1i(emitProgram.uniforms.uTarget, dye.read.attach(0));
+    gl.uniform2f(emitProgram.uniforms.size, canvas.width, canvas.height);
+    gl.uniform2f(emitProgram.uniforms.point, x, y);
+    gl.uniform2f(emitProgram.uniforms.radius, config.EMIT_INNER * side, config.EMIT_OUTER * side);
+    gl.uniform3f(emitProgram.uniforms.color, c.r * k, c.g * k, c.b * k);
+    gl.uniform1f(emitProgram.uniforms.rate, rate);
+    blit(dye.write);
+    dye.swap();
+}
+
 function correctRadius (radius) {
     let aspectRatio = canvas.width / canvas.height;
     if (aspectRatio > 1)
@@ -1392,79 +1435,52 @@ function correctRadius (radius) {
     return radius;
 }
 
-// Backyard: the trail follows the cursor without clicking; the canvas never takes clicks.
-let hasPointer = false;
-window.addEventListener('mousemove', e => {
-    const pointer = pointers[0];
-    const posX = scaleByPixelRatio(e.clientX);
-    const posY = scaleByPixelRatio(e.clientY);
-    if (!hasPointer) {
-        updatePointerDownData(pointer, -1, posX, posY);
-        hasPointer = true;
-        return;
+// Backyard: the orb follows the cursor, or a finger while it touches the screen.
+// Listeners are passive and the canvas never takes clicks, so scrolling and taps work as usual.
+let lastTouchTime = 0;
+
+function moveEmitter (clientX, clientY, restart) {
+    const x = scaleByPixelRatio(clientX);
+    const y = scaleByPixelRatio(clientY);
+    if (restart || !emitter.active) {
+        emitter.lastX = x;
+        emitter.lastY = y;
     }
-    updatePointerMoveData(pointer, posX, posY);
+    emitter.x = x;
+    emitter.y = y;
+    emitter.active = true;
+}
+
+function stopEmitter () {
+    emitter.active = false;
+}
+
+window.addEventListener('mousemove', e => {
+    // Ignore the mouse events browsers synthesize after a tap.
+    if (Date.now() - lastTouchTime < 1000) return;
+    moveEmitter(e.clientX, e.clientY);
 });
+document.addEventListener('mouseout', e => { if (!e.relatedTarget) stopEmitter(); });
+window.addEventListener('blur', stopEmitter);
 
-document.addEventListener('mouseleave', () => { hasPointer = false; });
-
-// Touch: listeners are passive, so they never block scrolling or taps.
-let lastTouch = null;
 window.addEventListener('touchstart', e => {
     const t = e.touches[0];
-    lastTouch = { x: t.clientX, y: t.clientY };
-    updatePointerDownData(pointers[0], -1, scaleByPixelRatio(t.clientX), scaleByPixelRatio(t.clientY));
+    lastTouchTime = Date.now();
+    moveEmitter(t.clientX, t.clientY, e.touches.length === 1);
 }, { passive: true });
 
 window.addEventListener('touchmove', e => {
     const t = e.touches[0];
-    lastTouch = { x: t.clientX, y: t.clientY };
-    updatePointerMoveData(pointers[0], scaleByPixelRatio(t.clientX), scaleByPixelRatio(t.clientY));
+    lastTouchTime = Date.now();
+    moveEmitter(t.clientX, t.clientY);
 }, { passive: true });
 
-// While the page scrolls, momentum after the finger lifts included, the fluid
-// keeps moving with the content where the finger last was.
-let lastScrollY = window.scrollY;
-window.addEventListener('scroll', () => {
-    const dy = window.scrollY - lastScrollY;
-    lastScrollY = window.scrollY;
-    if (!TOUCH || !lastTouch || dy === 0) return;
-    const pointer = pointers[0];
-    pointer.texcoordX = scaleByPixelRatio(lastTouch.x) / canvas.width;
-    pointer.texcoordY = 1.0 - scaleByPixelRatio(lastTouch.y) / canvas.height;
-    pointer.deltaX = 0;
-    pointer.deltaY = correctDeltaY(Math.max(-0.05, Math.min(0.05, dy / window.innerHeight)));
-    pointer.fromScroll = true;
-    pointer.moved = true;
-}, { passive: true });
-
-function updatePointerDownData (pointer, id, posX, posY) {
-    pointer.id = id;
-    pointer.down = true;
-    pointer.moved = false;
-    pointer.texcoordX = posX / canvas.width;
-    pointer.texcoordY = 1.0 - posY / canvas.height;
-    pointer.prevTexcoordX = pointer.texcoordX;
-    pointer.prevTexcoordY = pointer.texcoordY;
-    pointer.deltaX = 0;
-    pointer.deltaY = 0;
-    pointer.color = generateColor();
+function endTouch (e) {
+    lastTouchTime = Date.now();
+    if (e.touches.length === 0) stopEmitter();
 }
-
-function updatePointerMoveData (pointer, posX, posY) {
-    pointer.fromScroll = false;
-    pointer.prevTexcoordX = pointer.texcoordX;
-    pointer.prevTexcoordY = pointer.texcoordY;
-    pointer.texcoordX = posX / canvas.width;
-    pointer.texcoordY = 1.0 - posY / canvas.height;
-    pointer.deltaX = correctDeltaX(pointer.texcoordX - pointer.prevTexcoordX);
-    pointer.deltaY = correctDeltaY(pointer.texcoordY - pointer.prevTexcoordY);
-    pointer.moved = Math.abs(pointer.deltaX) > 0 || Math.abs(pointer.deltaY) > 0;
-}
-
-function updatePointerUpData (pointer) {
-    pointer.down = false;
-}
+window.addEventListener('touchend', endTouch, { passive: true });
+window.addEventListener('touchcancel', endTouch, { passive: true });
 
 function correctDeltaX (delta) {
     let aspectRatio = canvas.width / canvas.height;
@@ -1479,12 +1495,8 @@ function correctDeltaY (delta) {
 }
 
 function generateColor () {
-    let h = (0.985 + Math.random() * 0.03) % 1;
-    let c = HSVtoRGB(h, 0.92, 1.0);
-    c.r *= 0.19;
-    c.g *= 0.19;
-    c.b *= 0.19;
-    return c;
+    const c = config.EMIT_COLOR;
+    return { r: c.r * 0.15, g: c.g * 0.15, b: c.b * 0.15 };
 }
 
 function HSVtoRGB (h, s, v) {
