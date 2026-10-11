@@ -55,16 +55,40 @@ python3 -m http.server 8000
 
 Open http://localhost:8000 — the local `landing.json` is used.
 
-## Deploy
+## Deploy (server with the dashyard docker stack)
 
-Copy the files to the web root of backyard.cx on the same server as the admin site.
-**Do not overwrite the real `/landing.json`** that the admin site publishes, e.g.:
+The landing is served by the `nginx` container from `/home/landing` on the host
+(mounted read-only as `/var/www/landing`, see `docker-compose.prod.yml` in dashyard).
+
+One-time setup:
 
 ```
-rsync -av --exclude landing.json --exclude .git --exclude README.md ./ server:/var/www/backyard.cx/
+git clone https://github.com/Ennorath/Backyard-landing.git /home/backyard-landing
+sudo cp -a /home/landing /home/landing.php-backup        # keep the old PHP landing
+sudo rsync -a --delete --exclude .git --exclude README.md --exclude landing.json \
+  /home/backyard-landing/ /home/landing/
 ```
 
-Serve `/landing.json` with a short cache (e.g. `Cache-Control: no-cache`) so the monthly update shows up right away.
+`.git` must never land in `/home/landing`: nginx would serve it publicly.
+
+nginx in dashyard (`docker/nginx.conf.template`, `backyard.cx` server block) must serve
+`index.html` at `/` instead of the old PHP page, and expose `/landing.json` from the admin site:
+
+```
+location = / { try_files /index.html =404; }
+```
+
+After changing the template: `docker compose -f docker-compose.prod.yml restart nginx`.
+
+Updating the landing later (no container restart needed, files are read live):
+
+```
+git -C /home/backyard-landing pull
+sudo rsync -a --delete --exclude .git --exclude README.md --exclude landing.json \
+  /home/backyard-landing/ /home/landing/
+```
+
+`/assets/` is cached for 30 days, so bump `?v=` on the CSS/JS links in `index.html` when they change.
 
 ## Cursor fluid trail
 
