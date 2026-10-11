@@ -15,7 +15,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,400;1,500;1,700;1,800&family=Inter+Tight:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/styles.css?v=5" />
+<link rel="stylesheet" href="assets/styles.css?v=6" />
 <script>document.documentElement.classList.add('js')</script>
 </head>
 <body>
@@ -305,13 +305,13 @@
 
 <canvas id="fluid" aria-hidden="true"></canvas>
 <script>
-  // Cursor fluid trail: desktop pointers only, off when the visitor prefers reduced motion.
-  if (matchMedia('(pointer: fine)').matches && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
-    const s = document.createElement('script'); s.src = 'assets/fluid.js?v=5'; s.defer = true; document.body.appendChild(s);
+  // Fluid trail behind the cursor or finger; off when the visitor prefers reduced motion.
+  if (!matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    const s = document.createElement('script'); s.src = 'assets/fluid.js?v=6'; s.defer = true; document.body.appendChild(s);
   } else {
     document.getElementById('fluid').remove();
   }
 </script>
-<script src="assets/app.js?v=5" defer></script>
+<script src="assets/app.js?v=6" defer></script>
 </body>
 </html>

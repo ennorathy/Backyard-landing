@@ -31,6 +31,9 @@ SOFTWARE.
 
 const canvas = document.getElementById('fluid');
 if (!canvas) return;
+// Phones and tablets: the trail follows the finger, on a lighter simulation.
+const TOUCH = matchMedia('(pointer: coarse)').matches;
+const MAX_PIXEL_RATIO = TOUCH ? 1 : Infinity;
 resizeCanvas();
 
 let config = {
@@ -61,6 +64,13 @@ let config = {
     SUNRAYS_WEIGHT: 1.0,
 }
 
+if (TOUCH) {
+    config.SIM_RESOLUTION = 64;
+    config.DYE_RESOLUTION = 256;
+    config.PRESSURE_ITERATIONS = 10;
+    config.SPLAT_RADIUS = 0.3;
+}
+
 function pointerPrototype () {
     this.id = -1;
     this.texcoordX = 0;
@@ -83,7 +93,7 @@ if (!ctx) { canvas.remove(); return; }
 const { gl, ext } = ctx;
 
 if (!ext.supportLinearFiltering) {
-    config.DYE_RESOLUTION = 512;
+    config.DYE_RESOLUTION = Math.min(config.DYE_RESOLUTION, 512);
     config.SHADING = false;
     config.BLOOM = false;
     config.SUNRAYS = false;
@@ -1372,6 +1382,35 @@ window.addEventListener('mousemove', e => {
 
 document.addEventListener('mouseleave', () => { hasPointer = false; });
 
+// Touch: listeners are passive, so they never block scrolling or taps.
+let lastTouch = null;
+window.addEventListener('touchstart', e => {
+    const t = e.touches[0];
+    lastTouch = { x: t.clientX, y: t.clientY };
+    updatePointerDownData(pointers[0], -1, scaleByPixelRatio(t.clientX), scaleByPixelRatio(t.clientY));
+}, { passive: true });
+
+window.addEventListener('touchmove', e => {
+    const t = e.touches[0];
+    lastTouch = { x: t.clientX, y: t.clientY };
+    updatePointerMoveData(pointers[0], scaleByPixelRatio(t.clientX), scaleByPixelRatio(t.clientY));
+}, { passive: true });
+
+// While the page scrolls, momentum after the finger lifts included, the fluid
+// keeps moving with the content where the finger last was.
+let lastScrollY = window.scrollY;
+window.addEventListener('scroll', () => {
+    const dy = window.scrollY - lastScrollY;
+    lastScrollY = window.scrollY;
+    if (!TOUCH || !lastTouch || dy === 0) return;
+    const pointer = pointers[0];
+    pointer.texcoordX = scaleByPixelRatio(lastTouch.x) / canvas.width;
+    pointer.texcoordY = 1.0 - scaleByPixelRatio(lastTouch.y) / canvas.height;
+    pointer.deltaX = 0;
+    pointer.deltaY = correctDeltaY(Math.max(-0.05, Math.min(0.05, dy / window.innerHeight)));
+    pointer.moved = true;
+}, { passive: true });
+
 function updatePointerDownData (pointer, id, posX, posY) {
     pointer.id = id;
     pointer.down = true;
@@ -1481,7 +1520,7 @@ function getTextureScale (texture, width, height) {
 }
 
 function scaleByPixelRatio (input) {
-    let pixelRatio = window.devicePixelRatio || 1;
+    let pixelRatio = Math.min(window.devicePixelRatio || 1, MAX_PIXEL_RATIO);
     return Math.floor(input * pixelRatio);
 }
 
