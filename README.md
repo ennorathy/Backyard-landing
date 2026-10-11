@@ -17,13 +17,14 @@ On load the page fetches `/landing.json` from the same domain and replaces:
 
 | JSON field          | Where on the page                       | Shown as |
 |---------------------|-----------------------------------------|----------|
+| `titles`            | Traction · Titles entrusted to us       | `2000` → **2,000+** |
 | `views`             | Traction · Monthly views generated      | `35000000` → **35M+** |
 | `subscribers_total` | Traction · Subs across our network      | `9000000` → **9M+** |
 | `active_channels`   | Traction · Channels live                | `15` → **15.** |
 | `channels[]`        | Network · channel cards (name, language, subscribers, link) | `1220000` → **1.22M subs** |
 | `languages[]`       | Network · Languages we publish in       | `has_channel: false` → **Will be soon** |
 
-The numbers arrive already rounded by the worker (views up to 5M, channels up to 5, subscribers total up to 1M).
+The numbers arrive already rounded by the worker (titles up to 500, views up to 5M, channels up to 5, subscribers total up to 1M).
 If the file is missing or broken, the page keeps the values in the markup. Channel links are accepted only for `https://*.youtube.com`.
 
 Schema (same as the worker's monthly snapshot):
@@ -32,6 +33,7 @@ Schema (same as the worker's monthly snapshot):
 {
   "period": "2026-09",
   "generated_at": "2026-10-06T03:00:00Z",
+  "titles": 2000,
   "views": 35000000,
   "active_channels": 15,
   "subscribers_total": 9000000,

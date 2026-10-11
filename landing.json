@@ -1,26 +1,97 @@
 {
   "period": "2026-09",
   "generated_at": "2026-10-06T03:00:00Z",
+  "titles": 1500,
   "views": 20000000,
   "active_channels": 10,
   "subscribers_total": 3000000,
   "channels": [
-    {"name": "Horroryard", "url": "https://www.youtube.com/@horror_backyard", "language": "ru", "subscribers": 1600000},
-    {"name": "Movieyard", "url": "https://www.youtube.com/@movie_backyard", "language": "ru", "subscribers": 1220000},
-    {"name": "Films House", "url": "https://www.youtube.com/channel/UCEGpoUf_ZmP5u5wBGUAXgVg", "language": "ru", "subscribers": 276000},
-    {"name": "Movie Vault Media", "url": "https://www.youtube.com/@MovieVaultMedia", "language": "ru", "subscribers": 158000},
-    {"name": "Real KINO", "url": "https://www.youtube.com/@realkino_backyard", "language": "ru", "subscribers": 64000},
-    {"name": "More Filmov", "url": "https://www.youtube.com/@morefilmov_backyard", "language": "ru", "subscribers": 34000},
-    {"name": "Cinemayard", "url": "https://www.youtube.com/@cinema_backyard", "language": "en", "subscribers": 20000},
-    {"name": "Cinema Base", "url": "https://www.youtube.com/@CinemaBase_Backyard", "language": "en", "subscribers": 3000},
-    {"name": "Film Point", "url": "https://www.youtube.com/@FilmPointBackyard", "language": "ru", "subscribers": 1000},
-    {"name": "Storyland", "url": "https://www.youtube.com/@Storyland_Backyard", "language": "en", "subscribers": 1000}
+    {
+      "name": "Horroryard",
+      "url": "https://www.youtube.com/@horror_backyard",
+      "language": "ru",
+      "subscribers": 1600000
+    },
+    {
+      "name": "Movieyard",
+      "url": "https://www.youtube.com/@movie_backyard",
+      "language": "ru",
+      "subscribers": 1220000
+    },
+    {
+      "name": "Films House",
+      "url": "https://www.youtube.com/channel/UCEGpoUf_ZmP5u5wBGUAXgVg",
+      "language": "ru",
+      "subscribers": 276000
+    },
+    {
+      "name": "Movie Vault Media",
+      "url": "https://www.youtube.com/@MovieVaultMedia",
+      "language": "ru",
+      "subscribers": 158000
+    },
+    {
+      "name": "Real KINO",
+      "url": "https://www.youtube.com/@realkino_backyard",
+      "language": "ru",
+      "subscribers": 64000
+    },
+    {
+      "name": "More Filmov",
+      "url": "https://www.youtube.com/@morefilmov_backyard",
+      "language": "ru",
+      "subscribers": 34000
+    },
+    {
+      "name": "Cinemayard",
+      "url": "https://www.youtube.com/@cinema_backyard",
+      "language": "en",
+      "subscribers": 20000
+    },
+    {
+      "name": "Cinema Base",
+      "url": "https://www.youtube.com/@CinemaBase_Backyard",
+      "language": "en",
+      "subscribers": 3000
+    },
+    {
+      "name": "Film Point",
+      "url": "https://www.youtube.com/@FilmPointBackyard",
+      "language": "ru",
+      "subscribers": 1000
+    },
+    {
+      "name": "Storyland",
+      "url": "https://www.youtube.com/@Storyland_Backyard",
+      "language": "en",
+      "subscribers": 1000
+    }
   ],
   "languages": [
-    {"code": "en", "name": "English", "has_channel": true},
-    {"code": "ru", "name": "Русский", "has_channel": true},
-    {"code": "ar", "name": "العربية", "has_channel": false},
-    {"code": "es", "name": "Español", "has_channel": false},
-    {"code": "pt", "name": "Português", "has_channel": false}
+    {
+      "code": "en",
+      "name": "English",
+      "has_channel": true
+    },
+    {
+      "code": "ru",
+      "name": "Русский",
+      "has_channel": true
+    },
+    {
+      "code": "ar",
+      "name": "العربية",
+      "has_channel": false
+    },
+    {
+      "code": "es",
+      "name": "Español",
+      "has_channel": false
+    },
+    {
+      "code": "pt",
+      "name": "Português",
+      "has_channel": false
+    }
   ]
 }
