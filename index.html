@@ -15,7 +15,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,400;1,500;1,700;1,800&family=Inter+Tight:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/styles.css?v=3" />
+<link rel="stylesheet" href="assets/styles.css?v=4" />
 <script>document.documentElement.classList.add('js')</script>
 </head>
 <body>
@@ -26,7 +26,6 @@
     <a href="#offer">Offer</a>
     <a href="#traction">Traction</a>
     <a href="#channels">Channels</a>
-    <a href="#terms">Terms</a>
     <a href="#contact">Contact</a>
   </nav>
 </header>
@@ -45,7 +44,7 @@
       </h1>
       <p class="lead anim-in d3">
         Localization, distribution and monetization for rights holders.<br/>
-        Three languages, a lot of channels, <span class="accent">one partner</span>.
+        Four languages, a lot of channels, <span class="accent">one partner</span>.
       </p>
     </div>
   </section>
@@ -79,10 +78,10 @@
     <div class="offer-head anim-in d1">
       <div class="label-stack">
         <span class="eyebrow"><span class="num">02</span> <span class="red-dot"></span> Offer</span>
-        <h2 class="display-l">Three<br/>distribution<br/><span class="italic accent">tracks</span>.</h2>
+        <h2 class="display-l">Four<br/>distribution<br/><span class="italic accent">tracks</span>.</h2>
       </div>
       <div class="right-text">
-        Pick one, two, or all three. Each track is independent — terms, recoupment and reporting are kept separate per language. <strong style="color:var(--ink)">You pay nothing upfront, ever.</strong>
+        Pick one, two, or all four. Each track is independent — terms, recoupment and reporting are kept separate per language. <strong style="color:var(--ink)">You pay nothing upfront, ever.</strong>
       </div>
     </div>
     <div class="offer-grid">
@@ -104,10 +103,24 @@
         <div class="desc">Professional Arabic dubbing — funded by us at a low <strong class="em">$6.50/min</strong> rate for rapid recoupment. Recouped <strong>only</strong> from Arabic-track earnings.</div>
         <span class="badge"><span class="pulse"></span>We fund the dub</span>
       </div>
+      <div class="offer-card anim-in d5">
+        <span class="lang">ES — Localization</span>
+        <h3>Spanish</h3>
+        <div class="desc">Spanish-language release across our Spanish channels. Localization <strong class="em">funded by us</strong>, with terms set per title.</div>
+        <span class="badge"><span class="pulse"></span>We fund the localization</span>
+      </div>
+    </div>
+    <div class="langs-label anim-in d5">Languages we publish in</div>
+    <div class="langs-grid anim-in d5" id="langs-grid">
+      <div class="lang-item"><span class="code">EN</span><span class="lname">English</span><span class="state">Live</span></div>
+      <div class="lang-item"><span class="code">RU</span><span class="lname">Русский</span><span class="state">Live</span></div>
+      <div class="lang-item"><span class="code">AR</span><span class="lname">العربية</span><span class="state">Live</span></div>
+      <div class="lang-item"><span class="code">ES</span><span class="lname">Español</span><span class="state">Live</span></div>
+      <div class="lang-item soon"><span class="code">PT</span><span class="lname">Português</span><span class="state">Will be soon</span></div>
     </div>
     <div class="new-lang-strip anim-in d5">
       <span class="lbl"><span class="pulse"></span>Coming next</span>
-      <span class="text">Spanish & Portuguese localization offers are coming soon with <strong>the best terms on the market</strong>.</span>
+      <span class="text">Portuguese localization offers are coming soon with <strong>the best terms on the market</strong>.</span>
     </div>
   </section>
 
@@ -145,68 +158,59 @@
         <h2 class="display-l">Our channels.<br/><span class="italic accent">Tap any</span> to visit.</h2>
       </div>
       <div class="right">
-        Each channel is programmed for a specific audience. <strong>Open them live during our conversation</strong> — see what we do with the catalogues we already represent.
+        Each channel is programmed for a specific audience. See what we do with the catalogues we already represent.
       </div>
     </div>
     <div class="channels-grid anim-in d2" id="channels-grid">
       <a class="channel" href="https://www.youtube.com/@horror_backyard" target="_blank" rel="noopener">
-        <div class="row-top"><span class="lang-tag">RU</span><span class="arrow">↗</span></div>
+        <div class="row-top"><span class="ch-id"><span class="avatar">H</span><span class="lang-tag">RU</span></span><span class="arrow">↗</span></div>
         <div class="name">Horroryard</div>
         <div class="subs">1.6M subs</div>
       </a>
       <a class="channel" href="https://www.youtube.com/@movie_backyard" target="_blank" rel="noopener">
-        <div class="row-top"><span class="lang-tag">RU</span><span class="arrow">↗</span></div>
+        <div class="row-top"><span class="ch-id"><span class="avatar">M</span><span class="lang-tag">RU</span></span><span class="arrow">↗</span></div>
         <div class="name">Movieyard</div>
         <div class="subs">1.22M subs</div>
       </a>
       <a class="channel" href="https://www.youtube.com/channel/UCEGpoUf_ZmP5u5wBGUAXgVg" target="_blank" rel="noopener">
-        <div class="row-top"><span class="lang-tag">RU</span><span class="arrow">↗</span></div>
+        <div class="row-top"><span class="ch-id"><span class="avatar">F</span><span class="lang-tag">RU</span></span><span class="arrow">↗</span></div>
         <div class="name">Films House</div>
         <div class="subs">276K subs</div>
       </a>
       <a class="channel" href="https://www.youtube.com/@MovieVaultMedia" target="_blank" rel="noopener">
-        <div class="row-top"><span class="lang-tag">RU</span><span class="arrow">↗</span></div>
+        <div class="row-top"><span class="ch-id"><span class="avatar">M</span><span class="lang-tag">RU</span></span><span class="arrow">↗</span></div>
         <div class="name">Movie Vault Media</div>
         <div class="subs">158K subs</div>
       </a>
       <a class="channel" href="https://www.youtube.com/@realkino_backyard" target="_blank" rel="noopener">
-        <div class="row-top"><span class="lang-tag">RU</span><span class="arrow">↗</span></div>
+        <div class="row-top"><span class="ch-id"><span class="avatar">R</span><span class="lang-tag">RU</span></span><span class="arrow">↗</span></div>
         <div class="name">Real KINO</div>
         <div class="subs">64K subs</div>
       </a>
       <a class="channel" href="https://www.youtube.com/@morefilmov_backyard" target="_blank" rel="noopener">
-        <div class="row-top"><span class="lang-tag">RU</span><span class="arrow">↗</span></div>
+        <div class="row-top"><span class="ch-id"><span class="avatar">M</span><span class="lang-tag">RU</span></span><span class="arrow">↗</span></div>
         <div class="name">More Filmov</div>
         <div class="subs">34K subs</div>
       </a>
       <a class="channel" href="https://www.youtube.com/@cinema_backyard" target="_blank" rel="noopener">
-        <div class="row-top"><span class="lang-tag">EN</span><span class="arrow">↗</span></div>
+        <div class="row-top"><span class="ch-id"><span class="avatar">C</span><span class="lang-tag">EN</span></span><span class="arrow">↗</span></div>
         <div class="name">Cinemayard</div>
         <div class="subs">20K subs</div>
       </a>
       <a class="channel" href="https://www.youtube.com/@CinemaBase_Backyard" target="_blank" rel="noopener">
-        <div class="row-top"><span class="lang-tag">EN</span><span class="arrow">↗</span></div>
+        <div class="row-top"><span class="ch-id"><span class="avatar">C</span><span class="lang-tag">EN</span></span><span class="arrow">↗</span></div>
         <div class="name">Cinema Base</div>
         <div class="subs">3K subs</div>
       </a>
-      <a class="channel" href="https://www.youtube.com/@FilmPointBackyard" target="_blank" rel="noopener">
-        <div class="row-top"><span class="lang-tag">RU</span><span class="arrow">↗</span></div>
-        <div class="name">Film Point</div>
-        <div class="subs">1K subs</div>
-      </a>
       <a class="channel" href="https://www.youtube.com/@Storyland_Backyard" target="_blank" rel="noopener">
-        <div class="row-top"><span class="lang-tag">EN</span><span class="arrow">↗</span></div>
+        <div class="row-top"><span class="ch-id"><span class="avatar">S</span><span class="lang-tag">EN</span></span><span class="arrow">↗</span></div>
         <div class="name">Storyland</div>
         <div class="subs">1K subs</div>
       </a>
-    </div>
-    <div class="langs-label anim-in d3">Languages we publish in</div>
-    <div class="langs-grid anim-in d3" id="langs-grid">
-      <div class="lang-item"><span class="code">EN</span><span class="lname">English</span><span class="state">Live</span></div>
-      <div class="lang-item"><span class="code">RU</span><span class="lname">Русский</span><span class="state">Live</span></div>
-      <div class="lang-item soon"><span class="code">AR</span><span class="lname">العربية</span><span class="state">Will be soon</span></div>
-      <div class="lang-item soon"><span class="code">ES</span><span class="lname">Español</span><span class="state">Will be soon</span></div>
-      <div class="lang-item soon"><span class="code">PT</span><span class="lname">Português</span><span class="state">Will be soon</span></div>
+      <div class="channel more">
+        <div class="row-top"><span class="lang-tag">+</span></div>
+        <div class="name">And others</div>
+      </div>
     </div>
     <div class="new-channels-strip anim-in d3">
       <span class="lbl"><span class="pulse"></span>Launching</span>
@@ -262,36 +266,6 @@
     </div>
   </section>
 
-  <!-- SLIDE 8 — TERMS -->
-  <section class="slide" data-slide="8" id="terms">
-    <div class="anim-in d1">
-      <span class="eyebrow"><span class="num">07</span> <span class="red-dot"></span> Standard terms</span>
-      <h2 class="display-l" style="margin-top:clamp(14px,2vh,24px);max-width:1300px">Light, flexible, <br/><span class="italic accent">transparent</span>.</h2>
-    </div>
-    <div class="terms-grid anim-in d2">
-      <div class="term">
-        <span class="k">Revenue share</span>
-        <span class="v">50<span style="color:var(--ink-muted)">/</span>50</span>
-        <span class="sub">Net revenue split, transparent reporting per title.</span>
-      </div>
-      <div class="term">
-        <span class="k">Term</span>
-        <span class="v">2 yrs</span>
-        <span class="sub">Standard agreement length. Renewable on mutual terms.</span>
-      </div>
-      <div class="term">
-        <span class="k">License type</span>
-        <span class="v small">Non-exclusive</span>
-        <span class="sub">Exclusive only on the localized assets we produce — never on the title itself.</span>
-      </div>
-      <div class="term">
-        <span class="k">Territories</span>
-        <span class="v small">Negotiable<br/>by deal</span>
-        <span class="sub">Configured per title, per language, per market need.</span>
-      </div>
-    </div>
-  </section>
-
   <!-- SLIDE 9 — CONTACT -->
   <section class="slide contact" data-slide="9" id="contact">
     <h2 class="big anim-in d1">
@@ -310,15 +284,7 @@
         </div>
       </div>
       <div class="person">
-        <span class="role">Head of Partnerships</span>
-        <span class="name">Ivan Romanets</span>
-        <div class="contacts">
-          <a href="mailto:romanets@backyard.team">romanets@backyard.team</a>
-          <a href="https://wa.me/971504002443" target="_blank" rel="noopener">+971 50 400 2443 · WhatsApp</a>
-        </div>
-      </div>
-      <div class="person">
-        <span class="role">Acquisitions Manager</span>
+        <span class="role">Partnerships &amp; Acquisitions Manager</span>
         <span class="name">Ruslan Vintilesku</span>
         <div class="contacts">
           <a href="mailto:rv@backyard.team">rv@backyard.team</a>
@@ -349,11 +315,11 @@
 <script>
   // Cursor fluid trail: desktop pointers only, off when the visitor prefers reduced motion.
   if (matchMedia('(pointer: fine)').matches && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
-    const s = document.createElement('script'); s.src = 'assets/fluid.js?v=3'; s.defer = true; document.body.appendChild(s);
+    const s = document.createElement('script'); s.src = 'assets/fluid.js?v=4'; s.defer = true; document.body.appendChild(s);
   } else {
     document.getElementById('fluid').remove();
   }
 </script>
-<script src="assets/app.js?v=3" defer></script>
+<script src="assets/app.js?v=4" defer></script>
 </body>
 </html>

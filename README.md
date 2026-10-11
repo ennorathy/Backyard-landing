@@ -21,11 +21,11 @@ On load the page fetches `/landing.json` from the same domain and replaces:
 | `views`             | Traction · Monthly views generated      | `35000000` → **35M+** |
 | `subscribers_total` | Traction · Subs across our network      | `9000000` → **9M+** |
 | `active_channels`   | Traction · Channels live                | `15` → **15.** |
-| `channels[]`        | Network · channel cards (name, language, subscribers, link) | `1220000` → **1.22M subs** |
-| `languages[]`       | Network · Languages we publish in       | `has_channel: false` → **Will be soon** |
+| `channels[]`        | Network · first 9 channel cards in the order sent (worker ranks by last month's views): name, avatar, language, subscribers, link; the 10th cell is "And others" | `1220000` → **1.22M subs** |
+| `languages[]`       | Offer · Languages we publish in         | languages with `has_channel: true` are **Live**; of the rest only Portuguese is shown, as **Will be soon** (hardcoded in `app.js`) |
 
 The numbers arrive already rounded by the worker (titles up to 500, views up to 5M, channels up to 5, subscribers total up to 1M).
-If the file is missing or broken, the page keeps the values in the markup. Channel links are accepted only for `https://*.youtube.com`.
+If the file is missing or broken, the page keeps the values in the markup. Channel links are accepted only for `https://*.youtube.com`, avatars only from YouTube's image hosts (`ggpht.com`, `ytimg.com`, `googleusercontent.com`); without an avatar the card shows the channel's initial.
 
 Schema (same as the worker's monthly snapshot):
 
@@ -38,7 +38,7 @@ Schema (same as the worker's monthly snapshot):
   "active_channels": 15,
   "subscribers_total": 9000000,
   "channels": [
-    {"name": "Horroryard", "url": "https://www.youtube.com/@horror_backyard", "language": "ru", "subscribers": 1600000}
+    {"name": "Horroryard", "url": "https://www.youtube.com/@horror_backyard", "language": "ru", "subscribers": 1600000, "avatar_url": "https://yt3.ggpht.com/..."}
   ],
   "languages": [
     {"code": "en", "name": "English", "has_channel": true},

@@ -86,36 +86,72 @@
     document.querySelectorAll('[data-bind="' + key + '"]').forEach(n => { n.textContent = value; });
   }
 
+  const MAX_CHANNELS = 9;   // the 10th cell is "And others"
+
+  function safeAvatar(u) {
+    try {
+      const url = new URL(u);
+      return url.protocol === 'https:' && /(^|\.)(ggpht|ytimg|googleusercontent)\.com$/.test(url.hostname) ? url.href : null;
+    } catch (_) { return null; }
+  }
+
+  function avatar(c) {
+    const box = el('span', 'avatar', String(c.name).trim().charAt(0));
+    const src = safeAvatar(c.avatar_url);
+    if (src) {
+      const img = document.createElement('img');
+      img.alt = ''; img.referrerPolicy = 'no-referrer'; img.src = src;
+      img.addEventListener('load', () => { box.textContent = ''; box.append(img); });
+    }
+    return box;
+  }
+
+  function moreCell() {
+    const m = el('div', 'channel more');
+    const top = el('div', 'row-top');
+    top.append(el('span', 'lang-tag', '+'));
+    m.append(top, el('div', 'name', 'And others'));
+    return m;
+  }
+
   function renderChannels(list) {
     const grid = document.getElementById('channels-grid');
+    // The worker sends channels already ranked by last month's views.
     const cards = list.map(c => {
       const href = safeUrl(c.url);
       if (!href || !c.name) return null;
       const a = el('a', 'channel');
       a.href = href; a.target = '_blank'; a.rel = 'noopener';
       const top = el('div', 'row-top');
-      top.append(el('span', 'lang-tag', String(c.language || '').toUpperCase()), el('span', 'arrow', '↗'));
+      const id = el('span', 'ch-id');
+      id.append(avatar(c), el('span', 'lang-tag', String(c.language || '').toUpperCase()));
+      top.append(id, el('span', 'arrow', '↗'));
       a.append(top, el('div', 'name', c.name));
       if (isNum(c.subscribers)) a.append(el('div', 'subs', subs(c.subscribers) + ' subs'));
       return a;
-    }).filter(Boolean);
-    if (cards.length) grid.replaceChildren(...cards);
+    }).filter(Boolean).slice(0, MAX_CHANNELS);
+    if (cards.length) grid.replaceChildren(...cards, moreCell());
   }
+
+  // Of the languages without a channel only Portuguese is announced.
+  const SOON = [{ code: 'pt', name: 'Português' }];
 
   function renderLanguages(list) {
     const grid = document.getElementById('langs-grid');
-    const items = list.filter(l => l && l.code).map(l => {
-      const item = el('div', 'lang-item' + (l.has_channel ? '' : ' soon'));
-      item.append(
-        el('span', 'code', String(l.code).toUpperCase()),
-        el('span', 'lname', l.name || String(l.code).toUpperCase()),
-        el('span', 'state', l.has_channel ? 'Live' : 'Will be soon')
+    const item = (code, name, live) => {
+      const i = el('div', 'lang-item' + (live ? '' : ' soon'));
+      i.append(
+        el('span', 'code', String(code).toUpperCase()),
+        el('span', 'lname', name || String(code).toUpperCase()),
+        el('span', 'state', live ? 'Live' : 'Will be soon')
       );
-      return item;
-    });
-    // Languages with a channel first, the rest keep their order.
-    items.sort((a, b) => a.classList.contains('soon') - b.classList.contains('soon'));
-    if (items.length) grid.replaceChildren(...items);
+      return i;
+    };
+    const live = list.filter(l => l && l.code && l.has_channel);
+    if (!live.length) return;
+    const liveCodes = live.map(l => String(l.code).toLowerCase());
+    const soon = SOON.filter(l => !liveCodes.includes(l.code));
+    grid.replaceChildren(...live.map(l => item(l.code, l.name, true)), ...soon.map(l => item(l.code, l.name, false)));
   }
 
   function apply(d) {
