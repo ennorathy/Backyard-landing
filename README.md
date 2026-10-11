@@ -94,12 +94,14 @@ sudo rsync -a --delete --exclude .git --exclude README.md --exclude landing.json
 
 `assets/fluid.js` is an adapted copy of [WebGL-Fluid-Simulation](https://github.com/PavelDoGreat/WebGL-Fluid-Simulation) (MIT, © Pavel Dobryakov):
 GUI, promo and analytics removed, transparent canvas.
-An orb in the site's red (`#ff2d2d`) sits under the cursor. It starts tiny and grows into a white-hot core while the cursor rests
-(dye builds up every frame and fades with `DENSITY_DISSIPATION`), and leaves a swirling red trail when the cursor moves;
-a fast cursor cools the dye it drags, so the core breaks into a streak. The glow is the simulation's bloom.
-Orb settings are the `EMIT_*` keys (colour, radius, dye per second, speed falloff); `WHITE_AT` in the display shader
-sets how dense the dye must be to turn white.
+The motion uses the same settings and logic as genpeach.ai's cursor: dye and velocity are added only on frames where the cursor
+moved (velocity = 5 × pixels moved, 8 on touch), dye fades by 3% and velocity by 2% per frame
+(`DENSITY_DISSIPATION` 1.86, `VELOCITY_DISSIPATION` 1.22), `SPLAT_RADIUS` 0.2, bloom on, canvas in CSS pixels.
+So the orb starts tiny, grows into a white-hot core only while the cursor keeps moving (a still cursor adds nothing)
+and fades once it stops; a fast cursor leaves a swirling trail.
+The simulation runs in genpeach's peach (`SPLAT_COLOR` × `SPLAT_AMOUNT` 0.15); the last lines of the display shader swap that
+peach for the site's red (`#ff2d2d`) and keep the white.
 The canvas sits above the content with `pointer-events:none`, so clicks go through.
-On phones the orb appears under the finger while it touches the screen, on a lighter simulation (lower resolution, pixel ratio 1).
+On phones the orb follows the finger while it touches the screen (no shading there, like genpeach).
 It is skipped without WebGL and with `prefers-reduced-motion`.
 Tune it in the `config` object at the top of `fluid.js` (e.g. `DENSITY_DISSIPATION` for how fast the trail fades).

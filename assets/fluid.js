@@ -31,22 +31,28 @@ SOFTWARE.
 
 const canvas = document.getElementById('fluid');
 if (!canvas) return;
-// Phones and tablets: the trail follows the finger, on a lighter simulation.
+// Phones and tablets: the trail follows the finger.
 const TOUCH = matchMedia('(pointer: coarse)').matches;
-const MAX_PIXEL_RATIO = TOUCH ? 1 : Infinity;
+// Like genpeach.ai, the canvas is sized in CSS pixels; the dye is only 512 texels anyway.
+const MAX_PIXEL_RATIO = 1;
 resizeCanvas();
 
+// Backyard: the values genpeach.ai uses in its copy of this simulation.
+// They multiply dye by 0.97 and velocity by 0.98 every frame; this version divides by
+// (1 + k * dt) instead, so k = 60 * (1 / 0.97 - 1) = 1.86 and 60 * (1 / 0.98 - 1) = 1.22
+// give the same fade at 60 fps and keep it the same on faster screens.
 let config = {
     SIM_RESOLUTION: 128,
-    DYE_RESOLUTION: 1024,
+    DYE_RESOLUTION: 512,
     CAPTURE_RESOLUTION: 512,
-    DENSITY_DISSIPATION: 1.2,
-    VELOCITY_DISSIPATION: 2.0,
+    DENSITY_DISSIPATION: 1.86,
+    VELOCITY_DISSIPATION: 1.22,
     PRESSURE: 0.8,
     PRESSURE_ITERATIONS: 20,
-    CURL: 8,
+    CURL: 5,
     SPLAT_RADIUS: 0.2,
-    SPLAT_FORCE: 4500,
+    // Velocity added per CSS pixel the cursor moved since the last frame (genpeach: 5, touch 8).
+    SPLAT_FORCE: 5,
     SHADING: true,
     COLORFUL: false,
     COLOR_UPDATE_SPEED: 10,
@@ -56,34 +62,22 @@ let config = {
     BLOOM: true,
     BLOOM_ITERATIONS: 8,
     BLOOM_RESOLUTION: 256,
-    BLOOM_INTENSITY: 0.7,
-    BLOOM_THRESHOLD: 1.0,
+    BLOOM_INTENSITY: 0.8,
+    BLOOM_THRESHOLD: 0.6,
     BLOOM_SOFT_KNEE: 0.7,
     SUNRAYS: false,
     SUNRAYS_RESOLUTION: 196,
     SUNRAYS_WEIGHT: 1.0,
-    // Backyard: an orb under the cursor in the site's red (#ff2d2d). Dye above 1.0
-    // overexposes toward white (WHITE_AT in the display shader). EMIT_RADIUS is a
-    // part of the shorter screen side, EMIT_AMOUNT the dye added per second at the
-    // orb's centre; with DENSITY_DISSIPATION it sets how big the resting orb grows.
-    EMIT_COLOR: { r: 1.0, g: 0.176, b: 0.176 },
-    EMIT_RADIUS: 0.044,
-    EMIT_AMOUNT: 24,
-    // A moving cursor feeds less dye (halved at this many pixels per 60 fps frame),
-    // so only a resting orb turns white.
-    EMIT_SPEED_FALLOFF: 3,
+    // Dye added on every frame the cursor moved, so it only builds up while the cursor keeps
+    // moving. The simulation runs in genpeach's peach (x0.15) so the orb brightens and goes
+    // white exactly like theirs; the display shader then turns peach into the site red #ff2d2d.
+    SPLAT_COLOR: { r: 1.0, g: 0.3, b: 0.24 },
+    SPLAT_AMOUNT: 0.15,
 }
 
 if (TOUCH) {
-    config.SIM_RESOLUTION = 64;
-    config.DYE_RESOLUTION = 512;
-    config.PRESSURE_ITERATIONS = 10;
-    config.BLOOM_RESOLUTION = 128;
-    config.BLOOM_ITERATIONS = 6;
-    config.SPLAT_RADIUS = 0.3;
-    config.EMIT_RADIUS = 0.07;
-    config.EMIT_SPEED_FALLOFF = 8;
-    config.EMIT_AMOUNT = 36;
+    config.SPLAT_FORCE = 8;
+    config.SHADING = false;
 }
 
 function pointerPrototype () {
@@ -101,7 +95,7 @@ function pointerPrototype () {
 
 let pointers = [];
 let splatStack = [];
-// Cursor or finger position in canvas pixels; active while it is on the page.
+// Cursor or finger position in CSS pixels; active while it is on the page.
 const emitter = { active: false, x: 0, y: 0, lastX: 0, lastY: 0 };
 pointers.push(new pointerPrototype());
 
@@ -473,7 +467,6 @@ const checkerboardShader = compileShader(gl.FRAGMENT_SHADER, `
 
 const displayShaderSource = `
     precision highp float;
-    #define WHITE_AT 2.7
     precision highp sampler2D;
 
     varying vec2 vUv;
@@ -488,19 +481,8 @@ const displayShaderSource = `
     uniform vec2 ditherScale;
     uniform vec2 texelSize;
 
-    vec3 linearToGamma (vec3 color) {
-        color = max(color, vec3(0));
-        return max(1.055 * pow(color, vec3(0.416666667)) - 0.055, vec3(0));
-    }
-
     void main () {
         vec3 c = texture2D(uTexture, vUv).rgb;
-
-        // Backyard: dense dye blends from its colour to white, reaching white at WHITE_AT,
-        // so a saturated red overexposes like a hot light instead of staying flat red.
-        float level = max(c.r, max(c.g, c.b));
-        vec3 hue = c / max(level, 0.0001);
-        c = hue * min(level, 1.0) + (1.0 - hue) * clamp((level - 1.0) / (WHITE_AT - 1.0), 0.0, 1.0);
 
     #ifdef SHADING
         vec3 lc = texture2D(uTexture, vL).rgb;
@@ -533,9 +515,17 @@ const displayShaderSource = `
     #ifdef BLOOM
         float noise = texture2D(uDithering, vUv * ditherScale).r;
         noise = noise * 2.0 - 1.0;
-        bloom += noise / 255.0;
+        bloom += noise / 800.0;
+        bloom = pow(max(bloom, vec3(0.0)), vec3(1.0 / 2.2));
         c += bloom;
     #endif
+
+        // Backyard: the screen shows this clipped, so peach overexposes to white. Split the
+        // clipped colour into peach (1, 0.3, 0.24) plus white and swap the peach for our red
+        // (1, 0.176, 0.176): red stays red, white stays white, the glow becomes pink-red.
+        c = clamp(c, 0.0, 1.0);
+        c.g = clamp(1.177 * c.g - 0.177 * c.r, 0.0, 1.0);
+        c.b = c.g;
 
         float a = max(c.r, max(c.g, c.b));
         gl_FragColor = vec4(c, a);
@@ -554,9 +544,6 @@ const bloomPrefilterShader = compileShader(gl.FRAGMENT_SHADER, `
     void main () {
         vec3 c = texture2D(uTexture, vUv).rgb;
         float br = max(c.r, max(c.g, c.b));
-        // Backyard: cap the glow source so the white-hot core doesn't flood the page.
-        c *= min(1.0, 3.0 / max(br, 0.0001));
-        br = min(br, 3.0);
         float rq = clamp(br - curve.x, 0.0, curve.y);
         rq = curve.z * rq * rq;
         c *= max(rq, br - threshold) / max(br, 0.0001);
@@ -674,33 +661,6 @@ const splatShader = compileShader(gl.FRAGMENT_SHADER, `
         vec3 splat = exp(-dot(p, p) / radius) * color;
         vec3 base = texture2D(uTarget, vUv).xyz;
         gl_FragColor = vec4(base + splat, 1.0);
-    }
-`);
-
-// Backyard: feeds the cursor orb into the dye, a soft round splat added every
-// frame. While the cursor rests the dye builds up, so the orb starts small and
-// grows into a white-hot core; a moving cursor spreads it into a red trail.
-// The cap limits how bright the dye under a moving cursor may stay.
-const emitShader = compileShader(gl.FRAGMENT_SHADER, `
-    precision highp float;
-    precision highp sampler2D;
-
-    varying vec2 vUv;
-    uniform sampler2D uTarget;
-    uniform vec2 size;
-    uniform vec3 color;
-    uniform vec2 point;
-    uniform float radius;
-    uniform float cap;
-
-    void main () {
-        vec2 p = (vUv - point) * size;
-        float g = exp(-dot(p, p) / (radius * radius));
-        vec3 base = texture2D(uTarget, vUv).xyz;
-        // A fast cursor cools the dye it drags, so the white core breaks into a red streak.
-        float level = max(base.r, max(base.g, base.b));
-        base *= mix(1.0, min(1.0, cap / max(level, 0.0001)), min(1.0, g * 1.6) * 0.35);
-        gl_FragColor = vec4(base + g * color, 1.0);
     }
 `);
 
@@ -931,7 +891,6 @@ const bloomFinalProgram      = new Program(baseVertexShader, bloomFinalShader);
 const sunraysMaskProgram     = new Program(baseVertexShader, sunraysMaskShader);
 const sunraysProgram         = new Program(baseVertexShader, sunraysShader);
 const splatProgram           = new Program(baseVertexShader, splatShader);
-const emitProgram            = new Program(baseVertexShader, emitShader);
 const advectionProgram       = new Program(baseVertexShader, advectionShader);
 const divergenceProgram      = new Program(baseVertexShader, divergenceShader);
 const curlProgram            = new Program(baseVertexShader, curlShader);
@@ -1181,23 +1140,17 @@ function applyInputs (dt) {
     if (splatStack.length > 0)
         multipleSplats(splatStack.pop());
 
+    // Backyard: like genpeach, splat only on frames where the cursor moved. Dye builds up
+    // while the cursor keeps moving around one spot and fades once it stops.
     if (!emitter.active) return;
-    // Feed the orb every frame; a fast move is filled in with several splats
-    // along the path so the trail stays continuous.
-    const dxPx = emitter.x - emitter.lastX;
-    const dyPx = emitter.y - emitter.lastY;
+    const dx = emitter.x - emitter.lastX;
+    const dy = emitter.y - emitter.lastY;
+    if (dx === 0 && dy === 0) return;
     emitter.lastX = emitter.x;
     emitter.lastY = emitter.y;
-    const n = Math.min(8, Math.max(1, Math.ceil(Math.hypot(dxPx, dyPx) / scaleByPixelRatio(12))));
-    const vx = correctDeltaX(dxPx / canvas.width) * config.SPLAT_FORCE / n;
-    const vy = correctDeltaY(-dyPx / canvas.height) * config.SPLAT_FORCE / n;
-    const speed = Math.hypot(dxPx, dyPx) / Math.max(dt * 60, 0.1) / scaleByPixelRatio(1);
-    const amount = config.EMIT_AMOUNT * dt / n / (1 + speed / config.EMIT_SPEED_FALLOFF);
-    const cap = 1.8 + 100 * Math.exp(-speed / config.EMIT_SPEED_FALLOFF);
-    for (let i = 1; i <= n; i++) {
-        const back = 1 - i / n;
-        emit((emitter.x - dxPx * back) / canvas.width, 1.0 - (emitter.y - dyPx * back) / canvas.height, vx, vy, amount, cap);
-    }
+    const c = config.SPLAT_COLOR, k = config.SPLAT_AMOUNT * dt * 60;
+    splat(emitter.x / canvas.clientWidth, 1.0 - emitter.y / canvas.clientHeight,
+        dx * config.SPLAT_FORCE, -dy * config.SPLAT_FORCE, { r: c.r * k, g: c.g * k, b: c.b * k });
 }
 
 function step (dt) {
@@ -1408,7 +1361,7 @@ function splat (x, y, dx, dy, color) {
     gl.uniform1f(splatProgram.uniforms.aspectRatio, canvas.width / canvas.height);
     gl.uniform2f(splatProgram.uniforms.point, x, y);
     gl.uniform3f(splatProgram.uniforms.color, dx, dy, 0.0);
-    gl.uniform1f(splatProgram.uniforms.radius, correctRadius(config.SPLAT_RADIUS / 100.0));
+    gl.uniform1f(splatProgram.uniforms.radius, config.SPLAT_RADIUS / 100.0);
     blit(velocity.write);
     velocity.swap();
 
@@ -1418,44 +1371,11 @@ function splat (x, y, dx, dy, color) {
     dye.swap();
 }
 
-function emit (x, y, dx, dy, amount, cap) {
-    if (dx !== 0 || dy !== 0) {
-        splatProgram.bind();
-        gl.uniform1i(splatProgram.uniforms.uTarget, velocity.read.attach(0));
-        gl.uniform1f(splatProgram.uniforms.aspectRatio, canvas.width / canvas.height);
-        gl.uniform2f(splatProgram.uniforms.point, x, y);
-        gl.uniform3f(splatProgram.uniforms.color, dx, dy, 0.0);
-        gl.uniform1f(splatProgram.uniforms.radius, correctRadius(config.SPLAT_RADIUS / 100.0));
-        blit(velocity.write);
-        velocity.swap();
-    }
-
-    const c = config.EMIT_COLOR;
-    emitProgram.bind();
-    gl.uniform1i(emitProgram.uniforms.uTarget, dye.read.attach(0));
-    gl.uniform2f(emitProgram.uniforms.size, canvas.width, canvas.height);
-    gl.uniform2f(emitProgram.uniforms.point, x, y);
-    gl.uniform1f(emitProgram.uniforms.radius, config.EMIT_RADIUS * Math.min(canvas.width, canvas.height));
-    gl.uniform1f(emitProgram.uniforms.cap, cap);
-    gl.uniform3f(emitProgram.uniforms.color, c.r * amount, c.g * amount, c.b * amount);
-    blit(dye.write);
-    dye.swap();
-}
-
-function correctRadius (radius) {
-    let aspectRatio = canvas.width / canvas.height;
-    if (aspectRatio > 1)
-        radius *= aspectRatio;
-    return radius;
-}
-
 // Backyard: the orb follows the cursor, or a finger while it touches the screen.
 // Listeners are passive and the canvas never takes clicks, so scrolling and taps work as usual.
 let lastTouchTime = 0;
 
-function moveEmitter (clientX, clientY, restart) {
-    const x = scaleByPixelRatio(clientX);
-    const y = scaleByPixelRatio(clientY);
+function moveEmitter (x, y, restart) {
     if (restart || !emitter.active) {
         emitter.lastX = x;
         emitter.lastY = y;
@@ -1496,21 +1416,9 @@ function endTouch (e) {
 window.addEventListener('touchend', endTouch, { passive: true });
 window.addEventListener('touchcancel', endTouch, { passive: true });
 
-function correctDeltaX (delta) {
-    let aspectRatio = canvas.width / canvas.height;
-    if (aspectRatio < 1) delta *= aspectRatio;
-    return delta;
-}
-
-function correctDeltaY (delta) {
-    let aspectRatio = canvas.width / canvas.height;
-    if (aspectRatio > 1) delta /= aspectRatio;
-    return delta;
-}
-
 function generateColor () {
-    const c = config.EMIT_COLOR;
-    return { r: c.r * 0.15, g: c.g * 0.15, b: c.b * 0.15 };
+    const c = config.SPLAT_COLOR, k = config.SPLAT_AMOUNT;
+    return { r: c.r * k, g: c.g * k, b: c.b * k };
 }
 
 function HSVtoRGB (h, s, v) {
