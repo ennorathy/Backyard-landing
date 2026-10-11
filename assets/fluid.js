@@ -38,16 +38,17 @@ resizeCanvas();
 
 let config = {
     SIM_RESOLUTION: 128,
-    DYE_RESOLUTION: 512,
+    DYE_RESOLUTION: 1024,
     CAPTURE_RESOLUTION: 512,
-    DENSITY_DISSIPATION: 1.2,
+    DENSITY_DISSIPATION: 1.6,
     VELOCITY_DISSIPATION: 0.6,
     PRESSURE: 0.8,
     PRESSURE_ITERATIONS: 20,
-    CURL: 18,
-    SPLAT_RADIUS: 0.2,
+    CURL: 10,
+    SPLAT_RADIUS: 0.22,
     SPLAT_FORCE: 3000,
     SHADING: true,
+    LIQUID: true,
     COLORFUL: true,
     COLOR_UPDATE_SPEED: 10,
     PAUSED: false,
@@ -66,9 +67,9 @@ let config = {
 
 if (TOUCH) {
     config.SIM_RESOLUTION = 64;
-    config.DYE_RESOLUTION = 256;
+    config.DYE_RESOLUTION = 512;
     config.PRESSURE_ITERATIONS = 10;
-    config.SPLAT_RADIUS = 0.3;
+    config.SPLAT_RADIUS = 0.18;
 }
 
 function pointerPrototype () {
@@ -456,6 +457,8 @@ const checkerboardShader = compileShader(gl.FRAGMENT_SHADER, `
 
 const displayShaderSource = `
     precision highp float;
+    #define LIQUID_EDGE 0.05
+    #define LIQUID_COLOR vec3(0.78, 0.06, 0.06)
     precision highp sampler2D;
 
     varying vec2 vUv;
@@ -477,6 +480,23 @@ const displayShaderSource = `
 
     void main () {
         vec3 c = texture2D(uTexture, vUv).rgb;
+
+    #ifdef LIQUID
+        // Backyard: render the dye as a glossy liquid instead of smoke - a hard
+        // edge where the dye is dense enough, a rounded surface and a highlight.
+        float d = length(c);
+        float body = smoothstep(LIQUID_EDGE, LIQUID_EDGE * 1.6, d);
+        float hl = smoothstep(LIQUID_EDGE, LIQUID_EDGE * 6.0, length(texture2D(uTexture, vL).rgb));
+        float hr = smoothstep(LIQUID_EDGE, LIQUID_EDGE * 6.0, length(texture2D(uTexture, vR).rgb));
+        float ht = smoothstep(LIQUID_EDGE, LIQUID_EDGE * 6.0, length(texture2D(uTexture, vT).rgb));
+        float hb = smoothstep(LIQUID_EDGE, LIQUID_EDGE * 6.0, length(texture2D(uTexture, vB).rgb));
+        vec3 n = normalize(vec3(hl - hr, hb - ht, 0.35));
+        vec3 l = normalize(vec3(-0.45, 0.6, 1.0));
+        float diffuse = clamp(dot(n, l), 0.0, 1.0);
+        float spec = pow(max(dot(reflect(-l, n), vec3(0.0, 0.0, 1.0)), 0.0), 36.0);
+        vec3 base = LIQUID_COLOR * (0.45 + 0.55 * diffuse);
+        c = (base + vec3(spec) * 0.55) * body;
+    #endif
 
     #ifdef SHADING
         vec3 lc = texture2D(uTexture, vL).rgb;
@@ -1067,7 +1087,8 @@ function createTextureAsync (url) {
 
 function updateKeywords () {
     let displayKeywords = [];
-    if (config.SHADING) displayKeywords.push("SHADING");
+    if (config.LIQUID) displayKeywords.push("LIQUID");
+    else if (config.SHADING) displayKeywords.push("SHADING");
     if (config.BLOOM) displayKeywords.push("BLOOM");
     if (config.SUNRAYS) displayKeywords.push("SUNRAYS");
     displayMaterial.setKeywords(displayKeywords);
@@ -1238,7 +1259,9 @@ function drawDisplay (target) {
     let height = target == null ? gl.drawingBufferHeight : target.height;
 
     displayMaterial.bind();
-    if (config.SHADING)
+    if (config.LIQUID)
+        gl.uniform2f(displayMaterial.uniforms.texelSize, dye.texelSizeX, dye.texelSizeY);
+    else if (config.SHADING)
         gl.uniform2f(displayMaterial.uniforms.texelSize, 1.0 / width, 1.0 / height);
     gl.uniform1i(displayMaterial.uniforms.uTexture, dye.read.attach(0));
     if (config.BLOOM) {
@@ -1326,7 +1349,10 @@ function blur (target, temp, iterations) {
 function splatPointer (pointer) {
     let dx = pointer.deltaX * config.SPLAT_FORCE;
     let dy = pointer.deltaY * config.SPLAT_FORCE;
-    splat(pointer.texcoordX, pointer.texcoordY, dx, dy, pointer.color);
+    // Scroll splats repeat at one spot, so they add less dye.
+    const k = pointer.fromScroll ? 0.15 : 1;
+    const color = { r: pointer.color.r * k, g: pointer.color.g * k, b: pointer.color.b * k };
+    splat(pointer.texcoordX, pointer.texcoordY, dx, dy, color);
 }
 
 function multipleSplats (amount) {
@@ -1408,6 +1434,7 @@ window.addEventListener('scroll', () => {
     pointer.texcoordY = 1.0 - scaleByPixelRatio(lastTouch.y) / canvas.height;
     pointer.deltaX = 0;
     pointer.deltaY = correctDeltaY(Math.max(-0.05, Math.min(0.05, dy / window.innerHeight)));
+    pointer.fromScroll = true;
     pointer.moved = true;
 }, { passive: true });
 
@@ -1425,6 +1452,7 @@ function updatePointerDownData (pointer, id, posX, posY) {
 }
 
 function updatePointerMoveData (pointer, posX, posY) {
+    pointer.fromScroll = false;
     pointer.prevTexcoordX = pointer.texcoordX;
     pointer.prevTexcoordY = pointer.texcoordY;
     pointer.texcoordX = posX / canvas.width;

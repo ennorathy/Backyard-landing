@@ -94,6 +94,8 @@ sudo rsync -a --delete --exclude .git --exclude README.md --exclude landing.json
 
 `assets/fluid.js` is an adapted copy of [WebGL-Fluid-Simulation](https://github.com/PavelDoGreat/WebGL-Fluid-Simulation) (MIT, © Pavel Dobryakov):
 GUI, promo and analytics removed, transparent canvas, red trail that follows the cursor or finger.
+The dye is drawn as a glossy liquid (hard edge, rounded surface, highlight: the `LIQUID` block in the display shader;
+`LIQUID_EDGE` sets where the edge is, `LIQUID_COLOR` the colour) instead of the original smoke.
 The canvas sits above the content with `pointer-events:none`, so clicks go through.
 On phones it follows the finger while touching and scrolling, on a lighter simulation (lower resolution, pixel ratio 1).
 It is skipped without WebGL and with `prefers-reduced-motion`.
