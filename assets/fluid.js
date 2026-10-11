@@ -40,13 +40,13 @@ let config = {
     SIM_RESOLUTION: 128,
     DYE_RESOLUTION: 1024,
     CAPTURE_RESOLUTION: 512,
-    DENSITY_DISSIPATION: 3.0,
-    VELOCITY_DISSIPATION: 2.5,
+    DENSITY_DISSIPATION: 1.2,
+    VELOCITY_DISSIPATION: 2.0,
     PRESSURE: 0.8,
     PRESSURE_ITERATIONS: 20,
     CURL: 8,
     SPLAT_RADIUS: 0.2,
-    SPLAT_FORCE: 6000,
+    SPLAT_FORCE: 4500,
     SHADING: true,
     COLORFUL: false,
     COLOR_UPDATE_SPEED: 10,
@@ -62,14 +62,16 @@ let config = {
     SUNRAYS: false,
     SUNRAYS_RESOLUTION: 196,
     SUNRAYS_WEIGHT: 1.0,
-    // Backyard: a glowing coral orb sits under the cursor while it is on the page.
-    // Above 1.0 the coral overexposes to white; radii are parts of the shorter side.
-    EMIT_COLOR: { r: 1.0, g: 0.43, b: 0.37 },
-    EMIT_INTENSITY: 5.0,
-    EMIT_RATE: 0.15,
-    EMIT_SPEED_FALLOFF: 12,
-    EMIT_INNER: 0.045,
-    EMIT_OUTER: 0.08,
+    // Backyard: an orb under the cursor in the site's red (#ff2d2d). Dye above 1.0
+    // overexposes toward white (WHITE_AT in the display shader). EMIT_RADIUS is a
+    // part of the shorter screen side, EMIT_AMOUNT the dye added per second at the
+    // orb's centre; with DENSITY_DISSIPATION it sets how big the resting orb grows.
+    EMIT_COLOR: { r: 1.0, g: 0.176, b: 0.176 },
+    EMIT_RADIUS: 0.044,
+    EMIT_AMOUNT: 24,
+    // A moving cursor feeds less dye (halved at this many pixels per 60 fps frame),
+    // so only a resting orb turns white.
+    EMIT_SPEED_FALLOFF: 3,
 }
 
 if (TOUCH) {
@@ -79,8 +81,9 @@ if (TOUCH) {
     config.BLOOM_RESOLUTION = 128;
     config.BLOOM_ITERATIONS = 6;
     config.SPLAT_RADIUS = 0.3;
-    config.EMIT_INNER = 0.07;
-    config.EMIT_OUTER = 0.11;
+    config.EMIT_RADIUS = 0.07;
+    config.EMIT_SPEED_FALLOFF = 8;
+    config.EMIT_AMOUNT = 36;
 }
 
 function pointerPrototype () {
@@ -470,6 +473,7 @@ const checkerboardShader = compileShader(gl.FRAGMENT_SHADER, `
 
 const displayShaderSource = `
     precision highp float;
+    #define WHITE_AT 2.7
     precision highp sampler2D;
 
     varying vec2 vUv;
@@ -491,6 +495,12 @@ const displayShaderSource = `
 
     void main () {
         vec3 c = texture2D(uTexture, vUv).rgb;
+
+        // Backyard: dense dye blends from its colour to white, reaching white at WHITE_AT,
+        // so a saturated red overexposes like a hot light instead of staying flat red.
+        float level = max(c.r, max(c.g, c.b));
+        vec3 hue = c / max(level, 0.0001);
+        c = hue * min(level, 1.0) + (1.0 - hue) * clamp((level - 1.0) / (WHITE_AT - 1.0), 0.0, 1.0);
 
     #ifdef SHADING
         vec3 lc = texture2D(uTexture, vL).rgb;
@@ -544,6 +554,9 @@ const bloomPrefilterShader = compileShader(gl.FRAGMENT_SHADER, `
     void main () {
         vec3 c = texture2D(uTexture, vUv).rgb;
         float br = max(c.r, max(c.g, c.b));
+        // Backyard: cap the glow source so the white-hot core doesn't flood the page.
+        c *= min(1.0, 3.0 / max(br, 0.0001));
+        br = min(br, 3.0);
         float rq = clamp(br - curve.x, 0.0, curve.y);
         rq = curve.z * rq * rq;
         c *= max(rq, br - threshold) / max(br, 0.0001);
@@ -664,9 +677,10 @@ const splatShader = compileShader(gl.FRAGMENT_SHADER, `
     }
 `);
 
-// Backyard: feeds the cursor orb into the dye - a flat bright disc with a soft
-// rim. The dye eases toward the orb's colour instead of adding up, so a resting
-// cursor glows white while a moving one leaves a lighter coral trail.
+// Backyard: feeds the cursor orb into the dye, a soft round splat added every
+// frame. While the cursor rests the dye builds up, so the orb starts small and
+// grows into a white-hot core; a moving cursor spreads it into a red trail.
+// The cap limits how bright the dye under a moving cursor may stay.
 const emitShader = compileShader(gl.FRAGMENT_SHADER, `
     precision highp float;
     precision highp sampler2D;
@@ -676,14 +690,17 @@ const emitShader = compileShader(gl.FRAGMENT_SHADER, `
     uniform vec2 size;
     uniform vec3 color;
     uniform vec2 point;
-    uniform vec2 radius;
-    uniform float rate;
+    uniform float radius;
+    uniform float cap;
 
     void main () {
-        float d = length((vUv - point) * size);
-        float k = (1.0 - smoothstep(radius.x, radius.y, d)) * rate;
+        vec2 p = (vUv - point) * size;
+        float g = exp(-dot(p, p) / (radius * radius));
         vec3 base = texture2D(uTarget, vUv).xyz;
-        gl_FragColor = vec4(base + max(color - base, 0.0) * k, 1.0);
+        // A fast cursor cools the dye it drags, so the white core breaks into a red streak.
+        float level = max(base.r, max(base.g, base.b));
+        base *= mix(1.0, min(1.0, cap / max(level, 0.0001)), min(1.0, g * 1.6) * 0.35);
+        gl_FragColor = vec4(base + g * color, 1.0);
     }
 `);
 
@@ -1174,14 +1191,12 @@ function applyInputs (dt) {
     const n = Math.min(8, Math.max(1, Math.ceil(Math.hypot(dxPx, dyPx) / scaleByPixelRatio(12))));
     const vx = correctDeltaX(dxPx / canvas.width) * config.SPLAT_FORCE / n;
     const vy = correctDeltaY(-dyPx / canvas.height) * config.SPLAT_FORCE / n;
-    // EMIT_RATE and EMIT_SPEED_FALLOFF are per 60 fps frame; scale them to this frame.
-    const frames = dt * 60;
-    const rate = 1 - Math.pow(1 - config.EMIT_RATE, frames / n);
-    // A resting orb glows white; the faster it moves, the more it fades to coral.
-    const brightness = 1 / (1 + Math.hypot(dxPx, dyPx) / Math.max(frames, 0.1) / scaleByPixelRatio(config.EMIT_SPEED_FALLOFF));
+    const speed = Math.hypot(dxPx, dyPx) / Math.max(dt * 60, 0.1) / scaleByPixelRatio(1);
+    const amount = config.EMIT_AMOUNT * dt / n / (1 + speed / config.EMIT_SPEED_FALLOFF);
+    const cap = 1.8 + 100 * Math.exp(-speed / config.EMIT_SPEED_FALLOFF);
     for (let i = 1; i <= n; i++) {
         const back = 1 - i / n;
-        emit((emitter.x - dxPx * back) / canvas.width, 1.0 - (emitter.y - dyPx * back) / canvas.height, vx, vy, rate, brightness);
+        emit((emitter.x - dxPx * back) / canvas.width, 1.0 - (emitter.y - dyPx * back) / canvas.height, vx, vy, amount, cap);
     }
 }
 
@@ -1403,7 +1418,7 @@ function splat (x, y, dx, dy, color) {
     dye.swap();
 }
 
-function emit (x, y, dx, dy, rate, brightness) {
+function emit (x, y, dx, dy, amount, cap) {
     if (dx !== 0 || dy !== 0) {
         splatProgram.bind();
         gl.uniform1i(splatProgram.uniforms.uTarget, velocity.read.attach(0));
@@ -1415,15 +1430,14 @@ function emit (x, y, dx, dy, rate, brightness) {
         velocity.swap();
     }
 
-    const side = Math.min(canvas.width, canvas.height);
-    const c = config.EMIT_COLOR, k = config.EMIT_INTENSITY * brightness;
+    const c = config.EMIT_COLOR;
     emitProgram.bind();
     gl.uniform1i(emitProgram.uniforms.uTarget, dye.read.attach(0));
     gl.uniform2f(emitProgram.uniforms.size, canvas.width, canvas.height);
     gl.uniform2f(emitProgram.uniforms.point, x, y);
-    gl.uniform2f(emitProgram.uniforms.radius, config.EMIT_INNER * side, config.EMIT_OUTER * side);
-    gl.uniform3f(emitProgram.uniforms.color, c.r * k, c.g * k, c.b * k);
-    gl.uniform1f(emitProgram.uniforms.rate, rate);
+    gl.uniform1f(emitProgram.uniforms.radius, config.EMIT_RADIUS * Math.min(canvas.width, canvas.height));
+    gl.uniform1f(emitProgram.uniforms.cap, cap);
+    gl.uniform3f(emitProgram.uniforms.color, c.r * amount, c.g * amount, c.b * amount);
     blit(dye.write);
     dye.swap();
 }
