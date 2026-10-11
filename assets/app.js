@@ -47,6 +47,19 @@
   slides.forEach(s => { current.observe(s); reveal.observe(s); });
   setCurrent(0);
 
+  /* ---------- Partner logos ---------- */
+  // A logo that is not on the server yet falls back to the company name as text.
+  document.querySelectorAll('.partner img[data-fallback]').forEach(img => {
+    const toText = () => {
+      const name = document.createElement('div');
+      name.className = 'pname';
+      name.textContent = img.dataset.fallback;
+      img.replaceWith(name);
+    };
+    if (img.complete && img.naturalWidth === 0 && img.currentSrc) toText();
+    else img.addEventListener('error', toText, { once: true });
+  });
+
   /* ---------- Live numbers from /landing.json ---------- */
   // The markup already holds fallback values; the file only replaces them.
 
