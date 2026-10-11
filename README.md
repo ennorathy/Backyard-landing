@@ -65,3 +65,11 @@ rsync -av --exclude landing.json --exclude .git --exclude README.md ./ server:/v
 ```
 
 Serve `/landing.json` with a short cache (e.g. `Cache-Control: no-cache`) so the monthly update shows up right away.
+
+## Cursor fluid trail
+
+`assets/fluid.js` is an adapted copy of [WebGL-Fluid-Simulation](https://github.com/PavelDoGreat/WebGL-Fluid-Simulation) (MIT, © Pavel Dobryakov):
+GUI, promo and analytics removed, transparent canvas, red trail that follows the cursor.
+The canvas sits above the content with `pointer-events:none`, so clicks go through.
+It loads only for mouse pointers and is skipped on touch devices, without WebGL, and with `prefers-reduced-motion`.
+Tune it in the `config` object at the top of `fluid.js` (e.g. `DENSITY_DISSIPATION` for how fast the trail fades).
