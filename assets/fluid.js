@@ -33,6 +33,8 @@ const canvas = document.getElementById('fluid');
 if (!canvas) return;
 // Phones and tablets: the trail follows the finger.
 const TOUCH = matchMedia('(pointer: coarse)').matches;
+// Site links that give off smoke while hovered (see smokeFromLinks).
+const smokeLinks = Array.from(document.querySelectorAll('[data-smoke]'));
 // Like genpeach.ai, the canvas is sized in CSS pixels; the dye is only 512 texels anyway.
 const MAX_PIXEL_RATIO = 1;
 resizeCanvas();
@@ -1140,6 +1142,8 @@ function applyInputs (dt) {
     if (splatStack.length > 0)
         multipleSplats(splatStack.pop());
 
+    smokeFromLinks(dt);
+
     // Backyard: like genpeach, splat only on frames where the cursor moved. Dye builds up
     // while the cursor keeps moving around one spot and fades once it stops.
     if (!emitter.active) return;
@@ -1151,6 +1155,31 @@ function applyInputs (dt) {
     const c = config.SPLAT_COLOR, k = config.SPLAT_AMOUNT * dt * 60;
     splat(emitter.x / canvas.clientWidth, 1.0 - emitter.y / canvas.clientHeight,
         dx * config.SPLAT_FORCE, -dy * config.SPLAT_FORCE, { r: c.r * k, g: c.g * k, b: c.b * k });
+}
+
+// Backyard: smoke from the site links (data-smoke) while they are hot. app.js keeps el._heat
+// (0..1, grows the longer the cursor stays on the link); the hotter, the more and the brighter
+// the puffs. data-smoke="up" lets it rise, "down" sends it down out of the header.
+function smokeFromLinks (dt) {
+    const c = config.SPLAT_COLOR;
+    smokeLinks.forEach(el => {
+        const heat = el._heat || 0;
+        if (heat <= 0.01) return;
+        const r = el.getBoundingClientRect();
+        if (r.bottom < 0 || r.top > canvas.clientHeight || r.width === 0) return;
+        const dir = el.dataset.smoke === 'down' ? -1 : 1;
+        const size = Math.max(24, r.height * 0.7);
+        const radius = Math.pow(size / canvas.clientHeight, 2);
+        const puffs = 2;
+        const k = config.SPLAT_AMOUNT * (0.25 + 0.75 * heat) * heat * dt * 60;
+        for (let i = 0; i < puffs; i++) {
+            const x = r.left + Math.random() * r.width;
+            const y = r.top + r.height * (0.25 + 0.5 * Math.random());
+            splat(x / canvas.clientWidth, 1.0 - y / canvas.clientHeight,
+                (Math.random() - 0.5) * 60, dir * (40 + 120 * heat * Math.random()),
+                { r: c.r * k, g: c.g * k, b: c.b * k }, radius);
+        }
+    });
 }
 
 function step (dt) {
@@ -1355,13 +1384,13 @@ function multipleSplats (amount) {
     }
 }
 
-function splat (x, y, dx, dy, color) {
+function splat (x, y, dx, dy, color, radius) {
     splatProgram.bind();
     gl.uniform1i(splatProgram.uniforms.uTarget, velocity.read.attach(0));
     gl.uniform1f(splatProgram.uniforms.aspectRatio, canvas.width / canvas.height);
     gl.uniform2f(splatProgram.uniforms.point, x, y);
     gl.uniform3f(splatProgram.uniforms.color, dx, dy, 0.0);
-    gl.uniform1f(splatProgram.uniforms.radius, config.SPLAT_RADIUS / 100.0);
+    gl.uniform1f(splatProgram.uniforms.radius, radius || config.SPLAT_RADIUS / 100.0);
     blit(velocity.write);
     velocity.swap();
 

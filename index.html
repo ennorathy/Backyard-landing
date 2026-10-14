@@ -15,13 +15,13 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,400;1,500;1,700;1,800&family=Inter+Tight:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/styles.css?v=20" />
+<link rel="stylesheet" href="assets/styles.css?v=21" />
 <script>document.documentElement.classList.add('js')</script>
 </head>
 <body>
 
 <header class="chrome">
-  <a class="brand" href="#top">Backyard</a>
+  <a class="brand" href="#top" data-smoke="down">Backyard</a>
   <nav class="right">
     <a href="#offer">Offer</a>
     <a href="#traction">Traction</a>
@@ -288,7 +288,7 @@
     <div class="web anim-in d3">
       <div class="url-block">
         <span class="url-label">Website</span>
-        <a class="url" href="#top">backyard<span class="accent">.cx</span></a>
+        <a class="url" href="#top" data-smoke="up">backyard<span class="accent">.cx</span></a>
       </div>
       <span class="tagline" style="font-family:var(--mono);font-style:normal;font-weight:500;font-size:var(--fs-mono-small);letter-spacing:.18em;text-transform:uppercase;color:var(--ink-muted)">Your library is the asset. <span class="accent">We make it earn</span>.</span>
     </div>
@@ -307,11 +307,11 @@
 <script>
   // Fluid trail behind the cursor or finger; off when the visitor prefers reduced motion.
   if (!matchMedia('(prefers-reduced-motion: reduce)').matches) {
-    const s = document.createElement('script'); s.src = 'assets/fluid.js?v=20'; s.defer = true; document.body.appendChild(s);
+    const s = document.createElement('script'); s.src = 'assets/fluid.js?v=21'; s.defer = true; document.body.appendChild(s);
   } else {
     document.getElementById('fluid').remove();
   }
 </script>
-<script src="assets/app.js?v=20" defer></script>
+<script src="assets/app.js?v=21" defer></script>
 </body>
 </html>

@@ -159,6 +159,38 @@
     if (Array.isArray(d.channels)) renderChannels(d.channels);
   }
 
+  /* ---------- Site links heat up while hovered ----------
+     --heat goes 0 -> 1 the longer the cursor stays on the link and back to 0 after it leaves.
+     CSS turns it into the glow; fluid.js reads el._heat and lets smoke rise from the letters. */
+  const HEAT_UP = 3.0;   // seconds of hovering to reach full heat
+  const COOL_DOWN = 1.0; // seconds to cool from full heat
+  const hotLinks = Array.from(document.querySelectorAll('[data-smoke]'));
+  let heatFrame = 0, heatLast = 0;
+  function heatTick(t) {
+    const dt = heatLast ? Math.min((t - heatLast) / 1000, 0.1) : 0;
+    heatLast = t;
+    let busy = false;
+    hotLinks.forEach(el => {
+      const h = el._heat || 0;
+      const next = el._hover ? Math.min(1, h + dt / HEAT_UP) : Math.max(0, h - dt / COOL_DOWN);
+      el._heat = next;
+      // ease-out: the glow comes on quickly, then keeps brightening more slowly
+      el.style.setProperty('--heat', (1 - (1 - next) * (1 - next)).toFixed(3));
+      if (el._hover || next > 0) busy = true;
+    });
+    heatFrame = busy ? requestAnimationFrame(heatTick) : 0;
+    if (!busy) heatLast = 0;
+  }
+  // Mouse only: a tap on a phone would leave the link glowing until the next tap elsewhere.
+  hotLinks.forEach(el => {
+    el.addEventListener('pointerenter', e => {
+      if (e.pointerType !== 'mouse') return;
+      el._hover = true;
+      if (!heatFrame) heatFrame = requestAnimationFrame(heatTick);
+    });
+    el.addEventListener('pointerleave', () => { el._hover = false; });
+  });
+
   fetch('/landing.json', { cache: 'no-cache' })
     .then(r => (r.ok ? r.json() : Promise.reject(r.status)))
     .then(apply)

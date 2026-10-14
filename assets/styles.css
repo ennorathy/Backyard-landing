@@ -73,8 +73,7 @@
     gap:16px;
     background:linear-gradient(to bottom, rgba(10,10,10,.95), rgba(10,10,10,0));
   }
-  .chrome .brand{display:flex;align-items:center;gap:12px;color:var(--ink-muted);transition:color .25s}
-  .chrome .brand:hover{color:var(--ink)}
+  .chrome .brand{display:flex;align-items:center;gap:12px;color:var(--ink-muted)}
   .chrome .right{display:flex;align-items:center;gap:clamp(14px,2vw,28px);flex-wrap:wrap;justify-content:flex-end}
   .chrome .right a{transition:color .25s}
   .chrome .right a:hover,.chrome .right a.active{color:var(--ink)}
@@ -297,20 +296,21 @@
   .contact .web{display:flex;align-items:flex-end;justify-content:space-between;margin-top:clamp(20px,3vh,36px);padding-top:clamp(14px,2vh,24px);gap:24px;flex-wrap:wrap}
   .contact .web .url-block{display:flex;flex-direction:column;gap:6px}
   .contact .web .url-label{font-family:var(--mono);font-size:var(--fs-mono-small);letter-spacing:.22em;text-transform:uppercase;color:var(--ink-muted);font-weight:500}
-  .contact .web .url{font-family:var(--display);font-size:clamp(28px,3.2vw,44px);font-weight:700;letter-spacing:-.02em;text-transform:lowercase;transition:color .25s}
-  .contact .web .url:hover{color:var(--accent)}
+  .contact .web .url{font-family:var(--display);font-size:clamp(28px,3.2vw,44px);font-weight:700;letter-spacing:-.02em;text-transform:lowercase}
   .contact .web .url .accent{color:var(--accent)}
-  /* Site links (Backyard top left, backyard.cx on the last slide): on hover they heat up like the cursor orb,
-     white-hot letters with a red glow that builds up, then cools down when the cursor leaves */
-  .chrome .brand,.contact .web .url{
-    text-shadow:0 0 0 rgba(255,255,255,0),0 0 0 rgba(255,45,45,0),0 0 0 rgba(255,45,45,0),0 0 0 rgba(255,45,45,0),0 0 0 rgba(255,45,45,0);
-    transition:color .9s ease-out,text-shadow .9s ease-out}
-  .contact .web .url .accent{transition:color .9s ease-out}
-  .chrome .brand:hover,.contact .web .url:hover{color:#fff;
-    text-shadow:0 0 .04em #fff,0 0 .15em rgba(255,45,45,1),0 0 .35em rgba(255,45,45,1),0 0 .8em rgba(255,45,45,.85),0 0 1.8em rgba(255,45,45,.6);
-    transition:color 1.2s cubic-bezier(.3,0,.2,1),text-shadow 1.2s cubic-bezier(.3,0,.2,1)}
-  .contact .web .url:hover .accent{color:#fff;transition:color 1.2s cubic-bezier(.3,0,.2,1)}
-  @media (prefers-reduced-motion: reduce){.chrome .brand,.contact .web .url,.contact .web .url .accent{transition:none!important}}
+  /* Site links (Backyard top left, backyard.cx on the last slide) heat up like the cursor orb:
+     app.js raises --heat from 0 to 1 the longer the cursor stays on them (and lowers it after),
+     the letters go white-hot and the red glow grows; fluid.js adds smoke rising from the letters. */
+  .chrome .brand,.contact .web .url{--heat:0;
+    text-shadow:
+      0 0 calc(var(--heat) * .04em) rgba(255,255,255,var(--heat)),
+      0 0 calc(var(--heat) * .15em) rgba(255,45,45,var(--heat)),
+      0 0 calc(var(--heat) * .4em) rgba(255,45,45,var(--heat)),
+      0 0 calc(var(--heat) * 1em) rgba(255,45,45,calc(var(--heat) * .85)),
+      0 0 calc(var(--heat) * 2.2em) rgba(255,45,45,calc(var(--heat) * .6))}
+  .chrome .brand{color:color-mix(in srgb, #fff calc(var(--heat) * 100%), var(--ink-muted))}
+  .contact .web .url{color:color-mix(in srgb, #fff calc(var(--heat) * 100%), var(--ink))}
+  .contact .web .url .accent{color:color-mix(in srgb, #fff calc(var(--heat) * 100%), var(--accent))}
   .contact .web .tagline{
     font-family:var(--display);font-style:italic;font-weight:500;
     font-size:clamp(16px,1.5vw,22px);letter-spacing:-.005em;
