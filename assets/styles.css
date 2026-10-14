@@ -300,6 +300,17 @@
   .contact .web .url{font-family:var(--display);font-size:clamp(28px,3.2vw,44px);font-weight:700;letter-spacing:-.02em;text-transform:lowercase;transition:color .25s}
   .contact .web .url:hover{color:var(--accent)}
   .contact .web .url .accent{color:var(--accent)}
+  /* Site links (Backyard top left, backyard.cx on the last slide): on hover they heat up like the cursor orb,
+     white-hot letters with a red glow that builds up, then cools down when the cursor leaves */
+  .chrome .brand,.contact .web .url{
+    text-shadow:0 0 0 rgba(255,255,255,0),0 0 0 rgba(255,45,45,0),0 0 0 rgba(255,45,45,0),0 0 0 rgba(255,45,45,0),0 0 0 rgba(255,45,45,0);
+    transition:color .9s ease-out,text-shadow .9s ease-out}
+  .contact .web .url .accent{transition:color .9s ease-out}
+  .chrome .brand:hover,.contact .web .url:hover{color:#fff;
+    text-shadow:0 0 .04em #fff,0 0 .15em rgba(255,45,45,1),0 0 .35em rgba(255,45,45,1),0 0 .8em rgba(255,45,45,.85),0 0 1.8em rgba(255,45,45,.6);
+    transition:color 1.2s cubic-bezier(.3,0,.2,1),text-shadow 1.2s cubic-bezier(.3,0,.2,1)}
+  .contact .web .url:hover .accent{color:#fff;transition:color 1.2s cubic-bezier(.3,0,.2,1)}
+  @media (prefers-reduced-motion: reduce){.chrome .brand,.contact .web .url,.contact .web .url .accent{transition:none!important}}
   .contact .web .tagline{
     font-family:var(--display);font-style:italic;font-weight:500;
     font-size:clamp(16px,1.5vw,22px);letter-spacing:-.005em;
