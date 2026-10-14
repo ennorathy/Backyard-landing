@@ -65,7 +65,7 @@ One-time setup:
 ```
 git clone https://github.com/Ennorath/Backyard-landing.git /home/backyard-landing
 sudo cp -a /home/landing /home/landing.php-backup        # keep the old PHP landing
-sudo rsync -a --delete --exclude .git --exclude README.md --exclude landing.json \
+sudo rsync -a --delete --exclude .git --exclude README.md --exclude landing.json --exclude /c2026 \
   /home/backyard-landing/ /home/landing/
 ```
 
@@ -84,11 +84,15 @@ Updating the landing later (no container restart needed, files are read live):
 
 ```
 git -C /home/backyard-landing pull
-sudo rsync -a --delete --exclude .git --exclude README.md --exclude landing.json \
+sudo rsync -a --delete --exclude .git --exclude README.md --exclude landing.json --exclude /c2026 \
   /home/backyard-landing/ /home/landing/
 ```
 
 `/assets/` is cached for 30 days, so bump `?v=` on the CSS/JS links in `index.html` when they change.
+
+Private decks live only on the server, under `/home/landing/c2026/` (this repo is public, so they are never committed).
+nginx asks for a login and password for everything under `/c2026/` (`auth_basic`, password file `/home/landing/c2026/.htpasswd`).
+`--exclude /c2026` in the rsync above keeps `--delete` from wiping them: always use the command with it.
 
 ## Cursor fluid trail
 
