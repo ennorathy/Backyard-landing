@@ -153,7 +153,7 @@
   }
 
   function apply(d) {
-    if (isNum(d.titles)) setText('titles', thousands(d.titles));
+    // Titles stay fixed at 2K+ in the markup; landing.json's titles value is ignored.
     if (isNum(d.views)) setText('views', millions(d.views));
     if (isNum(d.subscribers_total)) setText('subscribers_total', millions(d.subscribers_total));
     if (isNum(d.active_channels)) setText('active_channels', String(d.active_channels));
