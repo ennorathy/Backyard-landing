@@ -18,13 +18,13 @@ On load the page fetches `/landing.json` from the same domain and replaces:
 
 | JSON field          | Where on the page                       | Shown as |
 |---------------------|-----------------------------------------|----------|
-| `titles`            | Traction · Titles entrusted to us       | `2000` → **2K+**, `2500` → **2.5K+** |
+| `titles`            | Traction · Titles entrusted to us       | `1700` → **1.7K+**, `2000` → **2K+** |
 | `views`             | Traction · Monthly views generated      | `35000000` → **35M+** |
-| `subscribers_total` | Traction · Subs across our network      | `9000000` → **9M+** |
-| `active_channels`   | Traction · Channels live                | `15` → **15.** |
+| `subscribers_total` | Traction · Subs across our network      | `3500000` → **3.5M+** |
+| `active_channels`   | Traction · Channels live                | `14` → **14.** |
 | `channels[]`        | Network · first 9 channel cards in the order sent (worker ranks by last month's views): name, avatar, language, subscribers, link; the 10th cell is "And others" | `1220000` → **1.22M subs** |
 
-The numbers arrive already rounded by the worker (titles up to 500, views up to 5M, channels up to 5, subscribers total up to 1M).
+The numbers arrive already rounded DOWN by the worker, so the "+" after them is true: views to 5M (37M → 35M), subscribers total to 100K (3.55M → 3.5M), titles to 100 (1 799 → 1 700); channels are the exact count.
 If the file is missing or broken, the page keeps the values in the markup. Channel links are accepted only for `https://*.youtube.com`, avatars only from YouTube's image hosts (`ggpht.com`, `ytimg.com`, `googleusercontent.com`); without an avatar the card shows the channel's initial.
 
 Schema (same as the worker's monthly snapshot):
@@ -33,10 +33,10 @@ Schema (same as the worker's monthly snapshot):
 {
   "period": "2026-09",
   "generated_at": "2026-10-06T03:00:00Z",
-  "titles": 2000,
+  "titles": 1700,
   "views": 35000000,
-  "active_channels": 15,
-  "subscribers_total": 9000000,
+  "active_channels": 14,
+  "subscribers_total": 3500000,
   "channels": [
     {"name": "Horroryard", "url": "https://www.youtube.com/@horror_backyard", "language": "ru", "subscribers": 1600000, "avatar_url": "https://yt3.ggpht.com/..."}
   ],

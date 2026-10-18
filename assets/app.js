@@ -63,15 +63,16 @@
   /* ---------- Live numbers from /landing.json ---------- */
   // The markup already holds fallback values; the file only replaces them.
 
+  // Values arrive rounded DOWN by the worker (views to 5M, subscribers to 100K, titles to 100),
+  // so the "+" after them is true; flooring here keeps it true for any other value too.
   function millions(n) {
-    // Values arrive pre-rounded (views to 5M, subscribers to 1M); ceil keeps "+" honest otherwise.
-    const m = Math.ceil(n / 1e6);
-    return m.toLocaleString('en-US') + 'M';
+    // 35000000 -> 35M, 3500000 -> 3.5M
+    return trim(Math.floor(n / 1e5) / 10, 1) + 'M';
   }
 
   function thousands(n) {
-    // Titles arrive rounded up to 500: 2000 -> 2K, 2500 -> 2.5K.
-    return n >= 1e3 ? trim(n / 1e3, 1) + 'K' : String(Math.ceil(n));
+    // 1700 -> 1.7K, 2000 -> 2K
+    return n >= 1e3 ? trim(Math.floor(n / 100) / 10, 1) + 'K' : String(Math.floor(n));
   }
 
   function trim(x, digits) {
