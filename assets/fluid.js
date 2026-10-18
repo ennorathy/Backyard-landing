@@ -880,7 +880,9 @@ let bloomFramebuffers = [];
 let sunrays;
 let sunraysTemp;
 
-let ditheringTexture = createTextureAsync('assets/fluid-dither.png');
+// Next to fluid.js itself, so pages in subfolders (e.g. /business/...) find it too.
+const ditherUrl = document.currentScript ? new URL('fluid-dither.png', document.currentScript.src).href : 'assets/fluid-dither.png';
+let ditheringTexture = createTextureAsync(ditherUrl);
 
 const blurProgram            = new Program(blurVertexShader, blurShader);
 const copyProgram            = new Program(baseVertexShader, copyShader);
