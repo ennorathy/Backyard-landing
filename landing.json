@@ -1,10 +1,10 @@
 {
   "period": "2026-09",
   "generated_at": "2026-10-11T20:17:22Z",
-  "titles": 2000,
-  "views": 40000000,
-  "active_channels": 15,
-  "subscribers_total": 4000000,
+  "titles": 1700,
+  "views": 35000000,
+  "active_channels": 14,
+  "subscribers_total": 3500000,
   "channels": [
     {"name": "Реальное КИНО — Backyard", "url": "https://www.youtube.com/@realkino_backyard", "language": "ru", "subscribers": 102000, "avatar_url": null},
     {"name": "Primeyard", "url": "https://www.youtube.com/@prime_backyard", "language": "ru", "subscribers": 21200, "avatar_url": null},
