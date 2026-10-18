@@ -520,8 +520,9 @@ a.title .ext,.story .top a .ext{font-family:var(--mono);font-size:.45em;color:va
 .cover-top{gap:clamp(10px,2vh,24px)!important}
 
 /* ---------- site: cursor fluid trail (backyard.cx/assets/fluid.js), under the slides ---------- */
-#fluid{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:0}
-.deck{z-index:1}
+/* Above the slides but blended with "screen": the glow lights up panels, posters and screenshots
+   instead of hiding behind them, and white text stays white on top of it. */
+#fluid{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:10;mix-blend-mode:screen}
 .nav-count{display:none;font-family:var(--mono);font-size:var(--fs-mono);letter-spacing:.16em;color:var(--ink-dim)}
 .nav-count b{color:var(--accent);font-weight:500}
 @media (max-width:520px){.nav-count{display:block}}
