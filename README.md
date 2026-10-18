@@ -18,7 +18,7 @@ On load the page fetches `/landing.json` from the same domain and replaces:
 
 | JSON field          | Where on the page                       | Shown as |
 |---------------------|-----------------------------------------|----------|
-| `titles`            | Traction · Titles entrusted to us       | `1700` → **1.7K+**, `2000` → **2K+** |
+| `titles`            | Traction · Titles entrusted to us       | rounded UP to 500: `1700` → **2K+**, `2100` → **2.5K+** |
 | `views`             | Traction · Monthly views generated      | `35000000` → **35M+** |
 | `subscribers_total` | Traction · Subs across our network      | `3500000` → **3.5M+** |
 | `active_channels`   | Traction · Channels live                | `14` → **14.** |
@@ -111,9 +111,9 @@ On phones the orb follows the finger while it touches the screen (no shading the
 It is skipped without WebGL and with `prefers-reduced-motion`.
 Tune it in the `config` object at the top of `fluid.js` (e.g. `DENSITY_DISSIPATION` for how fast the trail fades).
 
-## Deck for YouTube: `/business/plan-for-youtube/`
+## Deck for YouTube: `/wykad/`
 
-`business/plan-for-youtube/index.html` is the partnership review deck (v25) as a page: one slide at a time,
+`wykad/index.html` is the partnership review deck (v26) as a page: one slide at a time,
 arrows / Prev–Next / dots / swipe, slide counter on phones, `noindex`. Its copy is the agreed version, so edit
 the deck itself, not this page, and copy it over again. The only additions are the slide counter and the cursor
 fluid trail (`/assets/fluid.js`) under the slides. nginx serves it as a plain folder under `/home/landing`,

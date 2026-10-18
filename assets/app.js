@@ -153,7 +153,8 @@
   }
 
   function apply(d) {
-    if (isNum(d.titles)) setText('titles', thousands(d.titles));
+    // Titles are rounded UP to the next 500: 1700 -> 2K, 2100 -> 2.5K.
+    if (isNum(d.titles)) setText('titles', thousands(Math.ceil(d.titles / 500) * 500));
     if (isNum(d.views)) setText('views', millions(d.views));
     if (isNum(d.subscribers_total)) setText('subscribers_total', millions(d.subscribers_total));
     if (isNum(d.active_channels)) setText('active_channels', String(d.active_channels));
