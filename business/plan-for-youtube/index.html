@@ -853,7 +853,7 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape')lb.classList.remove(
 <script>
   // Fluid trail behind the cursor or finger, same as on backyard.cx; off when the visitor prefers reduced motion.
   if (!matchMedia('(prefers-reduced-motion: reduce)').matches) {
-    const s = document.createElement('script'); s.src = '/assets/fluid.js?v=22'; s.defer = true; document.body.appendChild(s);
+    const s = document.createElement('script'); s.src = '/assets/fluid.js?v=23'; s.defer = true; document.body.appendChild(s);
   } else {
     document.getElementById('fluid').remove();
   }
