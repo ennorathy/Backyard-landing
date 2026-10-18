@@ -18,7 +18,7 @@ On load the page fetches `/landing.json` from the same domain and replaces:
 
 | JSON field          | Where on the page                       | Shown as |
 |---------------------|-----------------------------------------|----------|
-| `titles`            | not used: the page always shows **2K+** titles (fixed in `index.html`) | — |
+| `titles`            | Traction · Titles entrusted to us       | rounded UP to 500: `1700` → **2K+**, `2100` → **2.5K+** |
 | `views`             | Traction · Monthly views generated      | `35000000` → **35M+** |
 | `subscribers_total` | Traction · Subs across our network      | `3500000` → **3.5M+** |
 | `active_channels`   | Traction · Channels live                | `14` → **14.** |
