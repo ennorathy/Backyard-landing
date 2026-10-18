@@ -111,9 +111,9 @@ On phones the orb follows the finger while it touches the screen (no shading the
 It is skipped without WebGL and with `prefers-reduced-motion`.
 Tune it in the `config` object at the top of `fluid.js` (e.g. `DENSITY_DISSIPATION` for how fast the trail fades).
 
-## Deck for YouTube: `/business/wykad/`
+## Deck for YouTube: `/wykad/`
 
-`business/wykad/index.html` is the partnership review deck (v26) as a page: one slide at a time,
+`wykad/index.html` is the partnership review deck (v26) as a page: one slide at a time,
 arrows / Prev–Next / dots / swipe, slide counter on phones, `noindex`. Its copy is the agreed version, so edit
 the deck itself, not this page, and copy it over again. The only additions are the slide counter and the cursor
 fluid trail (`/assets/fluid.js`) under the slides. nginx serves it as a plain folder under `/home/landing`,
